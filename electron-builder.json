@@ -1,0 +1,6 @@
+{
+    "extraResources": [{
+        "from": "bin",
+        "to": "bin"
+    }]
+}

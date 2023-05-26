@@ -1,48 +1,137 @@
 'use strict'
 
-import { app, protocol, BrowserWindow, ipcMain } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain, dialog, shell, Tray, Menu } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from "fs";
+import { Units } from "./unit.js"
+import BigNumber from 'bignumber.js';
+const cryptoLib = require("crypto");
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
+let homeDir = app.getPath("home") + path.sep;
+if (homeDir != "") {
+  fs.mkdirSync(homeDir + ".filefilego_data" + path.sep + "keystore", {
+    recursive: true,
+  });
+}
+
+function fileExists(filePath) {
+  try {
+    fs.statSync(filePath);
+    return true;
+  } catch (error) {
+    return false
+  }
+}
+
+function readJSONFile(filename) {
+  try {
+    const fileContent = fs.readFileSync(filename);
+    const jsonData = JSON.parse(fileContent);
+
+    return jsonData;
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      throw new Error(`File not found: ${filename}`);
+    }
+
+    throw err;
+  }
+}
+
+function saveJsonToFileSync(jsonObj, filename) {
+  const jsonString = JSON.stringify(jsonObj, null, 2);
+  fs.writeFileSync(filename, jsonString);
+}
+
+function removeDataIfExceeds2KB(str) {
+  const bufferSize = Buffer.byteLength(str);
+  if (bufferSize <= 2048) {
+    return str;
+  } else {
+    const buffer = Buffer.from(str);
+    const newBuffer = buffer.slice(bufferSize - 2048);
+    return newBuffer.toString();
+  }
+}
+
+var ffgoutput = "";
+
+setInterval(() => {
+  console.log(ffgoutput);
+}, 1000);
+
+var pidFFG = null;
 function spawnBinaryFile(binaryPath, argsArray) {
-  const process = spawn(binaryPath, argsArray);
+  const process = spawn(binaryPath, argsArray, {
+    detached: true,
+    // stdio: 'ignore'
+  });
 
   process.stdout.on('data', (data) => {
-    console.log(`stdout: ${data}`);
+    ffgoutput += data
+    ffgoutput = removeDataIfExceeds2KB(ffgoutput)
   });
 
   process.stderr.on('data', (data) => {
-    console.error(`stderr: ${data}`);
+    ffgoutput += data
+    ffgoutput = removeDataIfExceeds2KB(ffgoutput)
   });
 
   process.on('close', (code) => {
+    pidFFG = null
+    console.log(`child process result ${ffgoutput}`);
     console.log(`child process exited with code ${code}`);
   });
+
+  pidFFG = process.pid;
+
+  process.unref();
 
   return process;
 }
 
-function runBinary() {
+function runBinary(binaryPath, args) {
   try {
-    const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
-    const args = ["--debug", "--super_light_node", "--node_identity_passphrase=admin", '--rpc_services=data_transfer,transaction,address,filefilego', "--addr=0.0.0.0", "--http", "--http_addr=0.0.0.0", '--data_downloads_path=/home/ffg/Downloads/','--bootstrap_nodes=/ip4/18.159.124.250/tcp/10209/p2p/16Uiu2HAmVXbhxA1tiA9PRZJWwSk5jdMfWXbfeGWaubVeT7MZu8ie']
     spawnBinaryFile(binaryPath, args);
-    // execFile(binaryPath, args, (error, stdout, stderr) => {
-    //   if (error) {
-    //     console.error(error);
-    //     return;
-    //   }
-    //   console.log(stderr);
-    //   console.log(stdout);
-    // });
   } catch (e) {
     console.log(e)
   }
 }
+
+function spawnSync(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args);
+
+    let output = '';
+
+    child.stdout.on('data', (data) => {
+      output += data;
+    });
+
+    child.stderr.on('data', (data) => {
+      output += data;
+    });
+
+    child.on('error', (err) => {
+      reject(err);
+    });
+
+    child.on('close', (code) => {
+      if (code !== 0) {
+        const error = new Error(`Command failed with exit code ${code}: ${output}`);
+        reject(error);
+      } else {
+        resolve(output);
+      }
+    });
+  });
+}
+
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -59,9 +148,9 @@ async function createWindow() {
     width: 1024,
     height: 600,
     minHeight: 600,
-    // icon: path.join(__static, "icon.png"),
+    icon: path.join(__static, "icon.png"),
     webPreferences: {
-      
+
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: true,
@@ -99,6 +188,7 @@ app.on('activate', () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
+let tray = null
 app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
@@ -108,15 +198,80 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString())
     }
   }
+  tray = new Tray(path.join('public/icon.png'))
+  // tray = new Tray('/path/to/my/icon')
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Open', click: () => { win.show() } },
+    { label: 'Quit', click: () => { app.quit() } },
+  ])
+  tray.setToolTip('FileFileGo UI')
+  tray.setContextMenu(contextMenu)
+  tray.on('click', () => {
+    win.show();
+  })
   createWindow()
 })
 
 ipcMain.on("run-ffg", (evt, arg) => {
-  runBinary()
+  let args = [];
+  const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
+  const geolitePath = path.resolve(__dirname, "../", "bin", "GeoLite2-Country.mmdb");
+  try {
+    const settings = readJSONFile(path.join(homeDir, ".filefilego_data", "settings.json"))
+    if (settings.node_type == "storage") {
+      let feesBig = Units.convert(settings.storageFees, "FFG", "FFGOne")
+      let feesBigVal = new BigNumber(feesBig, 10);
+      args.push("--storage")
+      args.push(`--storage_dir=${settings.storageFolder}`)
+      args.push(`--storage_token=${settings.storageAccessToken}`)
+      args.push(`--storage_fees_byte=${feesBigVal.toString(10)}`)
+
+      if (settings.storagePublic) {
+        args.push("--storage_public")
+      }
+
+    } else {
+      args.push("--super_light_node")
+    }
+
+    args.push(`--geolite_db_path=${geolitePath}`)
+    args.push(`--data_downloads_path=${settings.downloadsFolder}`)
+    args.push(`--node_identity_passphrase=${arg.password}`)
+    args.push('--rpc_services=*')
+    args.push('--addr=0.0.0.0')
+    args.push('--http')
+    args.push('--http_port=9036')
+    args.push('--http_addr=127.0.0.1')
+    args.push(`--bootstrap_nodes=/dns/validator.local/tcp/10209/p2p/16Uiu2HAmVXbhxA1tiA9PRZJWwSk5jdMfWXbfeGWaubVeT7MZu8ie`)
+    // args.push(`--bootstrap_nodes=/ip4/18.159.124.250/tcp/10209/p2p/16Uiu2HAmVXbhxA1tiA9PRZJWwSk5jdMfWXbfeGWaubVeT7MZu8ie`)
+  } catch (e) {
+    return
+  }
+  runBinary(binaryPath, args)
+});
+
+ipcMain.on("ffg-pid", async (evt, arg) => {
+  evt.returnValue = pidFFG;
 });
 
 ipcMain.on("close-me", (evt, arg) => {
   app.quit();
+});
+
+ipcMain.on("select-dir", async (evt, arg) => {
+  const res = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+    title: "Select Directory",
+    properties: ['openDirectory']
+  })
+  evt.returnValue = res;
+});
+
+ipcMain.on("select-files", async (evt, arg) => {
+  const res = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+    title: "Select Files",
+    properties: ['openFile', 'multiSelections']
+  })
+  evt.returnValue = res;
 });
 
 let isMax = false;
@@ -130,10 +285,88 @@ ipcMain.on("maximize", (evt, arg) => {
   }
 });
 
-ipcMain.on("minimize", (evt, arg) => {
-  win.minimize();
+ipcMain.on("sha256", (evt, arg) => {
+  evt.returnValue =
+    "0x" +
+    cryptoLib
+      .createHash("sha256")
+      .update(arg)
+      .digest("hex");
 });
 
+ipcMain.on("minimize", (evt, arg) => {
+  // win.minimize();
+  evt.preventDefault()
+  win.hide();
+});
+
+ipcMain.on("ffg-output", (evt, arg) => {
+  evt.returnValue = ffgoutput
+});
+
+ipcMain.on("node-key-exists", (evt, arg) => {
+  evt.returnValue = fileExists(path.join(homeDir, ".filefilego_data", "keystore", "node_identity.json"))
+});
+
+ipcMain.on("create-node-identity", async (evt, arg) => {
+  try {
+    if (!fileExists(path.join(homeDir, ".filefilego_data", "keystore", "node_identity.json"))) {
+      const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
+      const args = ["address", "create_node_key", arg.password]
+      await spawnSync(binaryPath, args)
+      evt.returnValue = { error: "" }
+      return
+    }
+    evt.returnValue = { error: "node identity key already exists" }
+  } catch (e) {
+    evt.returnValue = { error: e.message }
+  }
+});
+
+ipcMain.on("save-storage-providers", (evt, arg) => {
+  try {
+    const settings = readJSONFile(path.join(homeDir, ".filefilego_data", "settings.json"))
+    if (settings.storage_providers == null) {
+      settings.storage_providers = [];
+    }
+
+    settings.storage_providers = arg;
+
+    saveJsonToFileSync(settings, path.join(homeDir, ".filefilego_data", "settings.json"))
+
+    evt.returnValue = { error: "" }
+
+  } catch (e) {
+    evt.returnValue = { error: e.message }
+  }
+});
+
+ipcMain.on("save-settings", (evt, arg) => {
+  try {
+    saveJsonToFileSync(arg, path.join(homeDir, ".filefilego_data", "settings.json"))
+    evt.returnValue = { error: "" }
+  } catch (e) {
+    evt.returnValue = { error: e.message }
+  }
+});
+
+ipcMain.on("get-settings", (evt, arg) => {
+  try {
+    const settings = readJSONFile(path.join(homeDir, ".filefilego_data", "settings.json"))
+    evt.returnValue = { error: "", settings: settings }
+  } catch (e) {
+    evt.returnValue = { error: e.message }
+  }
+});
+
+ipcMain.on("openUrl", (evt, arg) => {
+  try {
+    shell.openExternal(arg.url)
+    evt.returnValue = { error: "" }
+  } catch (e) {
+    evt.returnValue = { error: e.message }
+  }
+});
 
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {

@@ -13,9 +13,19 @@
   },
   "main": "background.js",
   "dependencies": {
+    "@vueup/vue-quill": "^1.2.0",
+    "axios": "^1.4.0",
+    "bignumber.js": "^2.3.0",
+    "bn.js": "^5.2.1",
     "core-js": "^3.8.3",
+    "filesize": "^10.0.7",
+    "flag-icons": "^6.6.6",
     "node-polyfill-webpack-plugin": "^2.0.1",
-    "vue": "^3.2.13"
+    "number-to-bn": "^1.7.0",
+    "queue": "^7.0.0",
+    "vue": "^3.2.13",
+    "vue-router": "^4.1.6",
+    "vue3-m-circle-progress-bar": "^0.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

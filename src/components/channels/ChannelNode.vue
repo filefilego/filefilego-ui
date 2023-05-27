@@ -169,7 +169,7 @@
                                             <td>
                                                 <div style="text-align: left; vertical-align: middle; padding-top:5px;">
                                                     <router-link style="font-weight: bold"
-                                                        :to="'/home/node/' + ch.node_hash"> {{ ch.name }}</router-link>
+                                                        :to="'/channels/node/' + ch.node_hash"> {{ ch.name }}</router-link>
                                                     <div v-if="ch.description != '' && ch.node_type <= 2 " style="font-size: 0.9em; padding: 0; margin: 0">
                                                         {{ ch.description }}
                                                     </div>
@@ -317,7 +317,7 @@
                                             <td>
                                                 <div style="text-align: left; vertical-align: middle; padding-top:5px;">
                                                     <router-link style="font-weight: bold"
-                                                        :to="'/home/node/' + ch.node_hash"> {{ ch.name }}</router-link>
+                                                        :to="'/channels/node/' + ch.node_hash"> {{ ch.name }}</router-link>
                                                     <div v-if="ch.description != '' && ch.node_type <= 2 " style="font-size: 0.9em; padding: 0; margin: 0">
                                                         {{ ch.description }}
                                                     </div>
@@ -455,7 +455,7 @@
                                                 <td>
                                                     <div style="text-align: left; vertical-align: middle; padding-top:5px;">
                                                         <router-link style="font-weight: bold"
-                                                            :to="'/home/node/' + ch.node_hash"> {{ ch.name }}</router-link>
+                                                            :to="'/channels/node/' + ch.node_hash"> {{ ch.name }}</router-link>
                                                         <div v-if="ch.description != '' && ch.node_type <= 2 " style="font-size: 0.9em; padding: 0; margin: 0">
                                                             {{ ch.description }}
                                                         </div>
@@ -613,17 +613,17 @@
 <script>
 // const { ipcRenderer } = window.require("electron");
 import axios from 'axios';
-import { globalState, SetEntryCreationMode } from '../store';
+import { globalState, SetEntryCreationMode } from '../../store';
 import { ref } from 'vue';
-import { Units } from "../unit.js"
+import { Units } from "../../unit.js"
 import BigNumber from 'bignumber.js';
-import Pagination from "../pagination.js";
-import { callJsonRpc2Endpoint } from '../rpc'
+import Pagination from "../../pagination.js";
+import { callJsonRpc2Endpoint } from '../../rpc'
 import numberToBN from "number-to-bn";
 import { QuillEditor } from '@vueup/vue-quill'
-import UploaderComponent from './UploaderComponent.vue'
+import UploaderComponent from '../UploaderComponent.vue'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
-import ftype from "../filetype";
+import ftype from "../../filetype";
 
 export default {
     components: {

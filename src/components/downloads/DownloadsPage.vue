@@ -328,15 +328,16 @@
 <script>
 // const { ipcRenderer } = window.require("electron");
 import axios from 'axios';
-import { globalState, AddToDownloads } from '../store';
+import { globalState, AddToDownloads } from '../../store';
 import { ref } from 'vue';
 // import { callJsonRpc2Endpoint } from '../rpc'
 // import numberToBN from "number-to-bn";
 // import Pagination from "../pagination.js";
 // import PaginationBar from "./PaginationBar.vue"
-import { Units } from "../unit.js"
+import { Units } from "../../unit.js"
 import BigNumber from 'bignumber.js';
-import ftype from "../filetype";
+import ftype from "../../filetype";
+import { localNodeEndpoint } from "../../rpc"
 
 export default {
     components: {
@@ -498,14 +499,13 @@ export default {
         },
         async createContract(dataQueryHash, remotePeer) {
             try {
-                const endpoint = ref(globalState.rpcEndpoint);
                 const data = {
                     jsonrpc: '2.0',
                     method: "data_transfer.CreateContractsFromDataQueryResponses",
                     params: [{ allow_response_only_from_peer: remotePeer, data_query_request_hash: dataQueryHash }],
                     id: 1
                 };
-                const response = await axios.post(endpoint.value, data);
+                const response = await axios.post(localNodeEndpoint, data);
                 let contract_hashes = response.data.result.contract_hashes;
 
                 let downloadContracts = [];
@@ -516,7 +516,7 @@ export default {
                         params: [{ contract_hash: contract_hashes[i] }],
                         id: 1
                     };
-                    const response2 = await axios.post(endpoint.value, data2);
+                    const response2 = await axios.post(localNodeEndpoint, data2);
                     let downloadContract = response2.data.result.contract;
                     downloadContracts.push(downloadContract)
                 }
@@ -621,14 +621,13 @@ export default {
                 this.searching = true;
                 clearInterval(this.checkDataQueryResponseInterval);
 
-                const endpoint = ref(globalState.rpcEndpoint);
                 const data = {
                     jsonrpc: '2.0',
                     method: "data_transfer.SendDataQueryRequest",
                     params: [{ file_hashes: this.file_hashes }],
                     id: 1
                 };
-                const response = await axios.post(endpoint.value, data);
+                const response = await axios.post(localNodeEndpoint, data);
                 this.dataQueryRequestHash = response.data.result.hash;
 
                 let retries = 0;
@@ -648,7 +647,7 @@ export default {
                             id: 1
                         };
 
-                        await axios.post(endpoint.value, data);
+                        await axios.post(localNodeEndpoint, data);
                     }
 
                     if (this.responses.length == 0 && retries == 3) {
@@ -659,7 +658,7 @@ export default {
                             id: 1
                         };
 
-                        await axios.post(endpoint.value, data);
+                        await axios.post(localNodeEndpoint, data);
                     }
 
                     const data = {
@@ -668,7 +667,7 @@ export default {
                         params: [{ data_query_request_hash: this.dataQueryRequestHash }],
                         id: 1
                     };
-                    const response = await axios.post(endpoint.value, data);
+                    const response = await axios.post(localNodeEndpoint, data);
 
                     response.data.result.responses.sort((a, b) => a.fees_per_byte != b.fees_per_byte && a.fees_per_byte == "0x0" ? -1 : 1);
                     this.responses = response.data.result.responses;

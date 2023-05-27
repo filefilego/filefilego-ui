@@ -1,5 +1,5 @@
 <template>
-    <div style="padding-bottom: 20px;">
+    <div id="create-node-key-container" style="padding-bottom: 20px;">
       <window-header></window-header>
       <div class="area" style="padding-bottom: 12px; padding-top: 21px; background-color: rgb(62, 21, 202); text-align: center;">
           <ul class="circles">
@@ -102,41 +102,58 @@
             </g>
             </svg>
           </div>
-          <span class="uk-text-lead uk-text-bold">Create Wallet Key & Address</span>
-          <br />
-          <div style=" padding:20px;">
-            <span class="uk-text-default" style="color:#000;">
-              We will create a secure wallet key and address for you. You have to secure this wallet key with your password:
-            </span>
 
-            <div style="margin-top:35px;">
-                <div class="uk-margin">
-                    <div class="uk-inline">
-                        <span class="uk-form-icon" uk-icon="icon: lock"></span>
-                        <input ref="inputPass1" v-model="password" style="width:400px; border-radius: 4px;" class="uk-input" type="password" placeholder="Password" aria-label="Input">
-                    </div>
-                </div>
+          <div v-if="keypath == ''">
+            <span class="uk-text-lead uk-text-bold">Create Wallet Key & Address</span>
+            <br />
+            <div style=" padding:20px;">
+              <span class="uk-text-default" style="color:#000;">
+                We will create a secure wallet key and address for you. You have to secure this wallet key with your password:
+              </span>
+  
+              <div style="margin-top:35px;">
+                  <div class="uk-margin">
+                      <div class="uk-inline">
+                          <span class="uk-form-icon" uk-icon="icon: lock"></span>
+                          <input ref="inputPass1" v-model="password" style="width:400px; border-radius: 4px;" class="uk-input" type="password" placeholder="Password" aria-label="Input">
+                      </div>
+                  </div>
+  
+                  <div class="uk-margin">
+                      <div class="uk-inline">
+                          <span class="uk-form-icon" uk-icon="icon: lock"></span>
+                          <input ref="inputPass2"  v-model="password2" style="width:400px; border-radius: 4px;" class="uk-input" type="password" placeholder="Confirm Password" aria-label="Input">
+                      </div>
+                  </div>
+                  <span v-if="errorMessage != ''" class="uk-text-small uk-text-danger">{{ errorMessage }}</span>
+              </div>
 
-                <div class="uk-margin">
-                    <div class="uk-inline">
-                        <span class="uk-form-icon" uk-icon="icon: lock"></span>
-                        <input ref="inputPass2"  v-model="password2" style="width:400px; border-radius: 4px;" class="uk-input" type="password" placeholder="Confirm Password" aria-label="Input">
-                    </div>
-                </div>
-                <span v-if="errorMessage != ''" class="uk-text-small uk-text-danger">{{ errorMessage }}</span>
+              <button @click="goToNodeChooser" class="uk-button ffg-button" style="width:250px; height:50px; ">
+              Next
+              <span class="uk-icon" uk-icon="icon:  arrow-right"></span>
+            </button>
+            
             </div>
           </div>
-          <div style="margin-top:0px;">
+
+          <hr style="margin:0px;" class="uk-divider-icon" />
+          <div style="padding:20px;">
+            <span class="uk-text-lead uk-text-bold">Import Wallet Key</span>
+            <div style="margin-top:10px;">
+              <span class="uk-text-default" style="color:#000;">
+                If you already have a wallet key, please import it here:
+              </span>
+            </div>
+            <button @click="openUnlockModal" class="uk-button ffg-button" style="margin-top:10px; width:220px; height:45px; ">
+              Import Key
+              <span class="uk-icon" uk-icon="icon: lock"></span>
+            </button>
+          </div>
+          <div style="margin-top:20px;">
             <button @click="goBack" class="uk-button" style="text-transform: none; width:250px; height:50px; margin-right:20px; ">
               Back
               <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
             </button>
-
-            <button @click="goToNodeChooser" class="uk-button ffg-button" style="width:250px; height:50px; ">
-              Next
-              <span class="uk-icon" uk-icon="icon:  arrow-right"></span>
-            </button>
-
             <div style="margin-top:20px;">
                 <span class="uk-text-default" style="color:#c94036;">
                     <span class="uk-icon" uk-icon="icon: warning"></span> Please don't forget your password and backup your wallet key file! The data of this application could be wiped out which would make it impossible to recover your coins.
@@ -144,6 +161,50 @@
             </div>
           </div>
         </div>
+
+        <div id="modal-unlockKey" uk-modal="container:#create-node-key-container">
+            <div class="uk-modal-dialog uk-modal-body">
+                <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 style="font-size: 1.2em; font-weight: bold;" class="uk-modal-title">Import key</h2>
+                <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
+                    <img style="height: 64px; background-color: white; width: 64px; border-radius: 50%;"
+                        src="/assets/icon.png" />
+                    <br />
+                </div>
+                <div style="height: 40px; margin-top:35px; text-align: center;">
+                  <span
+                      style="padding: 10px; color: #ffff; background-color: #0160fe; border: 1px solid #0160fe; border-radius: 2px;">
+                      <span uk-icon="plus"></span>
+                      <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
+                          class="custom-file-upload">Select Wallet Key</label>
+                      <input @change="selectedKeyPath" style="display:none;" id="filesinput" type="file"
+                          multiple />
+                  </span>
+              </div>
+
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: lock"></span>
+                        <input v-model="keypassword" style="width:100%; border-radius: 4px; color:#000;" class="uk-input"
+                            type="text" placeholder="Password" aria-label="Input">
+                    </div>
+                </div>
+
+                <div style="padding: 10px; margin-top:5px;">
+                    <div v-if="importError != ''" style="margin-top:10px; padding-bottom:5px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                uk-icon="icon: warning;"></span> {{ importError }} </span>
+                    </div>
+                    <button @click="importKey"
+                        class="uk-button ffg-button"
+                        style="font-weight: bold; text-transform: none; width:100%; height:50px;">
+                        Import
+                        <span class="uk-icon" uk-icon="icon:  arrow-down"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
   </template>
   
@@ -159,6 +220,9 @@
     },
     data() {
         return {
+            keypath: "",
+            keypassword: "",
+            importError: "",
             errorMessage: "",
             password: "",
             password2: ""
@@ -172,6 +236,46 @@
          }
     },
     methods: {
+      selectedKeyPath(e) {
+        try {
+          this.keypath = e.target.files[0].path;
+        } catch (e) {
+          this.importError = e.message;
+        }
+      },
+      importKey() {
+        if(this.keypath == "") {
+          this.importError = "Please choose a wallet key file first";
+          return
+        }
+
+        if(this.keypassword == "") {
+          this.importError = "Password is empty, please enter the password associated with this wallet key";
+          return
+        }
+
+        this.importError = "";
+        let st = ipcRenderer.sendSync("check-key", { path: this.keypath, password: this.keypassword });
+        if(st.error != "") {
+          this.importError = st.error;
+        } else {
+          this.password = this.keypassword;
+          this.password2 = this.keypassword;
+          this.goToNodeChooser()
+        }
+      },
+      openUnlockModal() {
+            this.subChannelCreated = false;
+            const myModal = document.getElementById('modal-unlockKey');
+            const modal = window.UIkit.modal(myModal);
+            modal.show();
+        },
+      closeUnlockModal() {
+          const myModal = document.getElementById('modal-unlockKey');
+          const modal = window.UIkit.modal(myModal);
+          modal.hide();
+      },
+
       goToNodeChooser() {
         if(this.password == '' || this.password2 == '') {
             this.errorMessage = "Password can not be empty."

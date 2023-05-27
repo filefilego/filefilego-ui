@@ -17,13 +17,13 @@
                 <div class="uk-navbar-left">
                     <ul class="uk-navbar-nav">
                         <li>
-                            <router-link style="text-transform: none;" to="/home/storage">
+                            <router-link style="text-transform: none;" to="/storage">
                                 <span uk-icon="icon:server; ratio:1"></span>
                                 Storage Providers
                             </router-link>
                         </li>
                         <li>
-                            <router-link style="text-transform: none;" to="/home/files">
+                            <router-link style="text-transform: none;" to="/storage/files">
                                 <span uk-icon="icon:database; ratio:1"></span>
                                 Uploaded files
                             </router-link>
@@ -106,10 +106,11 @@
 <script>
 const { ipcRenderer } = window.require("electron");
 import axios from 'axios';
-import { globalState, RemoveStorageProviders, SetStorageProviders} from '../store';
+import { globalState, RemoveStorageProviders, SetStorageProviders} from '../../store';
 import { ref } from 'vue';
 import "/node_modules/flag-icons/css/flag-icons.min.css";
-import { Units } from "../unit.js"
+import { Units } from "../../unit.js"
+import { localNodeEndpoint } from "../../rpc"
 import BigNumber from 'bignumber.js';
 
 export default {
@@ -221,8 +222,8 @@ export default {
                     params: [{ peer_id: p.storage_provider_peer_addr, file_size: 1024 * 1024 * 10 }],
                     id: 1
                 };
-                let endpoint = ref(globalState.rpcEndpoint);
-                let response = await axios.post(endpoint.value, data);
+
+                let response = await axios.post(localNodeEndpoint, data);
                 this.speedTest[p.storage_provider_peer_addr] = { download_throughput_mb: response.data.result.download_throughput_mb }
             } catch (e) {
                 console.log(e.message)
@@ -241,8 +242,7 @@ export default {
                     id: 1
                 };
 
-                let endpoint = ref(globalState.rpcEndpoint);
-                let response = await axios.post(endpoint.value, data);
+                let response = await axios.post(localNodeEndpoint, data);
                 this.providers = [...response.data.result.storage_providers];
             } catch (e) {
                 console.log(e.message)
@@ -259,8 +259,8 @@ export default {
                     id: 1
                 };
 
-                let endpoint = ref(globalState.rpcEndpoint);
-                let response = await axios.post(endpoint.value, data);
+                
+                let response = await axios.post(localNodeEndpoint, data);
                 return response.data.result;
             } catch (e) {
                 alert(e.message)

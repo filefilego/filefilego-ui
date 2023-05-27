@@ -56,7 +56,7 @@
             <div style="text-align: center; padding-bottom: 10px;">
                 <span style="color:#000; font-weight: bold;"> Select files to upload on your local storage node:</span>
             </div>
-            <div v-if="filesQueue.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
+            <div v-if="globalState.node_type =='storage'" && filesQueue.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
                 <div v-for="(u, idx) in filesQueue" :key="'up' + idx"
                     style="border-top:1px solid #ededed; padding:0px; margin:0px; padding-bottom:8px;" uk-grid>
                     <div class="uk-width-expand" style="vertical-align:middle;">
@@ -108,8 +108,11 @@
                     </div>
                 </div>
             </div>
+            <div style="margin-top:15px; text-align: center;" v-if="globalState.node_type !='storage'">
+                Your node is not a storage node. If you want to upload data directly to your node you should set up a storage node.
+            </div>
 
-            <div style="height: 40px; margin-top:5px; text-align: center;">
+            <div v-if="globalState.node_type =='storage'" style="height: 40px; margin-top:5px; text-align: center;">
                 <span
                     style="padding: 10px; color: #ffff; background-color: #0160fe; border: 1px solid #0160fe; border-radius: 2px;">
                     <span uk-icon="plus"></span>
@@ -127,7 +130,7 @@
                     <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
                 </button>
 
-                <button @click="startUploading" class="uk-button ffg-button">
+                <button v-if="globalState.node_type =='storage'" @click="startUploading" class="uk-button ffg-button">
                     Upload
                     <span class="uk-icon" uk-icon="icon:  upload"></span>
                 </button>
@@ -260,7 +263,7 @@
                 </table>
                 <div style="text-align: center; margin-top:10px;" v-else>
                     <span style="color: #000;">
-                        We're sorry, but it seems like there are no storage providers in your selected list. Please visit the <router-link to="/home/storage"> "Storage Providers" </router-link> section to explore and find suitable providers. Tap the star icon to add them to your list, and you'll be able to see them here.
+                        We're sorry, but it seems like there are no storage providers in your selected list. Please visit the <router-link to="/storage"> "Storage Providers" </router-link> section to explore and find suitable providers. Tap the star icon to add them to your list, and you'll be able to see them here.
                     </span>
                 </div>
             </div>
@@ -366,6 +369,7 @@ import ftype from "../filetype";
 import { Units } from "../unit.js"
 import BigNumber from 'bignumber.js';
 import axios from 'axios';
+import { localNodeEndpoint } from "../rpc"
 
 export default {
     components: {
@@ -384,6 +388,9 @@ export default {
 
     },
     computed: {
+        globalState(){
+            return globalState
+        },
         filesQueue() {
             const data = ref(globalState.upload_data);
             return data.value
@@ -455,8 +462,8 @@ export default {
                 id: 1
             };
             try {
-                const endpoint = ref(globalState.rpcEndpoint);
-                const response = await axios.post(endpoint.value, data);
+                const endpoint = localNodeEndpoint;
+                const response = await axios.post(endpoint, data);
                 if(response.data.result.success) {
                     this.loadingIntervalProgressBarNetworkUploads = setInterval(async () => {
                         try {
@@ -467,7 +474,7 @@ export default {
                                 id: 1
                             };
 
-                            const response = await axios.post(endpoint.value, data);
+                            const response = await axios.post(endpoint, data);
                             if(response.data.result.files != undefined) {
                                 UpdateFileUploadToNetworkProgress(response.data.result.files)
                             }

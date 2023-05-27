@@ -24,34 +24,34 @@
           <div>Home</div>
         </li>
       </router-link>
-      <router-link to="/home/wallet">
+      <router-link to="/wallet">
         <li class="uk-text-center main-sidebar-item" style="font-size: 1em; padding-left: 12px; padding: 12px;">
           <span uk-icon="icon: credit-card"></span>
           <div>Wallet</div>
         </li>
       </router-link>
-      <router-link to="/home/channels">
+      <router-link to="/channels">
         <li class="uk-text-center main-sidebar-item" style="font-size: 1em; padding-left: 12px; padding: 12px;">
           <span uk-icon="icon: thumbnails"></span>
           <div>Channels</div>
         </li>
       </router-link>
 
-      <router-link to="/home/storage">
+      <router-link to="/storage">
         <li class="uk-text-center main-sidebar-item" style="font-size: 1em; padding-left: 12px; padding: 12px;">
           <span uk-icon="icon: server"></span>
           <div>Storage</div>
         </li>
       </router-link>
 
-      <router-link to="/home/drive">
+      <router-link to="/secure">
         <li class="uk-text-center main-sidebar-item" style="font-size: 1em; padding-left: 12px; padding: 12px;">
           <span uk-icon="icon: lock"></span>
           <div>Secure Drive </div>
         </li>
       </router-link>
 
-      <router-link to="/home/downloads">
+      <router-link to="/downloads">
         <li class="uk-text-center main-sidebar-item" style="font-size: 1em; padding-left: 12px; padding: 12px;">
           <span uk-icon="icon: download"></span>
           <div>Downloads</div>
@@ -66,7 +66,7 @@
       </router-link>
     </ul>
 
-    <div
+    <div v-if="globalState.node_type =='storage'"
       style="width:247px; max-width:247px; position: fixed; bottom: 20px; text-align: center; color: #fff; font-weight: bold;">
       <CircleProgressBar style="margin: 0 auto; width:80px; height:80px; color: #fff; font-weight: bold;" percentage
         :value="blockchain_height" :max="heighest_block_number_discovered">
@@ -86,67 +86,31 @@
 </template>
   
 <script>
-import axios from 'axios';
 import { globalState } from '../store';
-import { ref } from 'vue';
 import { CircleProgressBar } from 'vue3-m-circle-progress-bar';
 export default {
   components: {
     CircleProgressBar
   },
   data() {
-
     return {
-      blockchain_height: 0,
-      heighest_block_number_discovered: 100,
-      syncing: true,
-      interval: null,
-      numFailedCalls: 0,
-      failedAttempsError: ""
     }
   },
-  unmounted() {
-    clearInterval(this.interval)
-  },
-  mounted() {
-    this.interval = setInterval(async () => {
-      if (this.numFailedCalls > 50) {
-        clearInterval(this.interval);
-        this.failedAttempsError = "failed to connect to local node retried 50 times";
-        return;
-      }
-
-      await this.getStats()
-    }, 4000)
-  },
-  computed: {},
-  methods: {
-    async getStats() {
-      try {
-        const data = {
-          jsonrpc: '2.0',
-          method: "filefilego.Stats",
-          params: [{}],
-          id: 1
-        };
-        const endpoint = ref(globalState.rpcEndpoint);
-        const response = await axios.post(endpoint.value, data);
-
-        this.blockchain_height = response.data.result.blockchain_height;
-        this.heighest_block_number_discovered = response.data.result.heighest_block_number_discovered;
-        if (this.heighest_block_number_discovered == 0) {
-          this.heighest_block_number_discovered = 100;
-        }
-        if (this.blockchain_height > this.heighest_block_number_discovered) {
-          this.heighest_block_number_discovered = this.blockchain_height;
-        }
-        this.syncing = response.data.result.syncing;
-        this.numFailedCalls = 0;
-      } catch (e) {
-        this.numFailedCalls++
-      }
+  computed: {
+    globalState(){
+      return globalState
+    },
+    blockchain_height() {
+      return globalState.blockchain_height;
+    },
+    heighest_block_number_discovered() {
+      return globalState.heighest_block_number_discovered;
+    },
+    syncing() {
+      return globalState.syncing;
     }
-  }
+  },
+    methods: {}
 };
 </script>
   

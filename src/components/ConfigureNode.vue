@@ -331,11 +331,7 @@
             return
           }
 
-          const createNodeIdentity = ipcRenderer.sendSync("create-node-identity", { password: nodeSettings.password });
-          if(createNodeIdentity.error != "") {
-            alert(createNodeIdentity.error);
-          }
-          
+          ipcRenderer.sendSync("create-node-identity", { password: nodeSettings.password });  
           this.$router.replace("/unlock")
       }
     }

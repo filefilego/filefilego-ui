@@ -17,13 +17,13 @@
                 <div class="uk-navbar-left">
                     <ul class="uk-navbar-nav">
                         <li>
-                            <router-link style="text-transform: none;" to="/home/storage">
+                            <router-link style="text-transform: none;" to="/storage">
                                 <span uk-icon="icon:server; ratio:1"></span>
                                 Storage Providers
                             </router-link>
                         </li>
                         <li>
-                            <router-link style="text-transform: none;" to="/home/files">
+                            <router-link style="text-transform: none;" to="/storage/files">
                                 <span uk-icon="icon:database; ratio:1"></span>
                                 Uploaded files
                             </router-link>
@@ -113,12 +113,13 @@
         
 <script>
 // const { ipcRenderer } = window.require("electron");
-import UploaderComponent from './UploaderComponent.vue'
+import UploaderComponent from './../UploaderComponent.vue'
 import axios from 'axios';
-import { globalState } from '../store';
+import { globalState } from '../../store';
 import { ref } from 'vue';
-import Pagination from "../pagination.js";
-import PaginationBar from "./PaginationBar.vue"
+import Pagination from "../../pagination.js";
+import PaginationBar from "./../PaginationBar.vue"
+import { localNodeEndpoint } from "../../rpc"
 
 export default {
     components: {
@@ -188,8 +189,8 @@ export default {
                     id: 1
                 };
 
-                let endpoint = ref(globalState.rpcEndpoint);
-                let response = await axios.post(endpoint.value, data);
+                
+                let response = await axios.post(localNodeEndpoint, data);
                 if (response.data.result.files && response.data.result.files != null) {
                     this.files = [...response.data.result.files];
                 }

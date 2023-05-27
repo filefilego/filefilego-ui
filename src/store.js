@@ -5,6 +5,10 @@ import uploader from "./uploader";
 import { callJsonRpc2Endpoint } from "./rpc.js"
 
 const globalState = reactive({
+    blockchain_height: 0,
+    heighest_block_number_discovered: 100,
+    syncing: true,
+
     // downloader
     downloads: [
 
@@ -270,6 +274,12 @@ export function AddToDownloads(downloadItem) {
 
 export {
     globalState
+}
+
+export function SetBlockchainStats(blockchain_height, heighest_block_number_discovered, syncing) {
+    globalState.blockchain_height = blockchain_height
+    globalState.heighest_block_number_discovered = heighest_block_number_discovered;
+    globalState.syncing = syncing;
 }
 
 export function SetRpcEndpoint(nodeType) {

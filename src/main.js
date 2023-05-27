@@ -7,16 +7,28 @@ import CreateNodeIdentity from './components/CreateNodeIdentity.vue'
 import ChooseNodeType from './components/ChooseNodeType.vue'
 import ConfigureNode from './components/ConfigureNode.vue'
 import UnlockKey from './components/UnlockKey.vue'
-import HomePage from './components/HomePage.vue'
-import HomeIntro from './components/HomeIntro.vue'
-import WalletPage from './components/WalletPage.vue'
-import ChannelsPage from './components/ChannelsPage.vue'
-import SearchPage from './components/SearchPage.vue'
-import ChannelNode from './components/ChannelNode.vue'
-import StoragePage from './components/StoragePage.vue'
-import StorageFiles from './components/StorageFiles.vue'
-import SecureDrive from './components/SecureDrive.vue'
-import DownloadPage from './components/DownloadPage.vue'
+
+import HomeView from './components/home/HomeView.vue'
+import HomeIntro from './components/home/HomeIntro.vue'
+import WalletView from './components/wallet/WalletView.vue'
+import WalletPage from './components/wallet/WalletPage.vue'
+import ChannelsView from './components/channels/ChannelsView.vue'
+import ChannelsPage from './components/channels/ChannelsPage.vue'
+import ChannelNode from './components/channels/ChannelNode.vue'
+import SearchPage from './components/channels/SearchPage.vue'
+
+import StorageView from './components/storage/StorageView.vue'
+import StoragePage from './components/storage/StoragePage.vue'
+import StorageFiles from './components/storage/StorageFiles.vue'
+
+import DownloadsView from './components/downloads/DownloadsView.vue'
+import DownloadsPage from './components/downloads/DownloadsPage.vue'
+
+import SecureView from './components/secure/SecureView.vue'
+import SecurePage from './components/secure/SecurePage.vue'
+
+import SettingsView from './components/settings/SettingsView.vue'
+import SettingsPage from './components/settings/SettingsPage.vue'
 
 const routes = [
     {
@@ -45,55 +57,102 @@ const routes = [
         component: UnlockKey
     },
     {
+        path: '/secure',
+        name: "SecureView",
+        component: SecureView,
+        children: [
+            {
+                path: "",
+                name: "SecurePage",
+                component: SecurePage,
+            },
+        ]
+    },
+    {
+        path: '/downloads',
+        name: "DownloadsView",
+        component: DownloadsView,
+        children: [
+            {
+                path: "",
+                name: "DownloadsPage",
+                component: DownloadsPage,
+            },
+        ]
+    },
+    {
+        path: '/storage',
+        name: "StorageView",
+        component: StorageView,
+        children: [
+            {
+                path: "",
+                name: "StoragePage",
+                component: StoragePage,
+            },
+            {
+                path: "files",
+                name: "StorageFiles",
+                component: StorageFiles,
+            },
+        ]
+    },
+    {
+        path: '/channels',
+        name: "ChannelsView",
+        component: ChannelsView,
+        children: [
+            {
+                path: "",
+                name: "ChannelsPage",
+                component: ChannelsPage,
+            },
+            {
+                path: "node/:hash",
+                name: "ChannelNode",
+                component: ChannelNode,
+            },
+            {
+                path: "search",
+                name: "SearchPage",
+                component: SearchPage
+            }
+        ]
+    },
+    {
+        path: '/wallet',
+        name: "WalletView",
+        component: WalletView,
+        children: [
+            {
+                path: "",
+                name: "WalletPage",
+                component: WalletPage,
+            },
+        ]
+    },
+    {
+        path: '/settings',
+        name: "SettingsView",
+        component: SettingsView,
+        children: [
+            {
+                path: "",
+                name: "SettingsPage",
+                component: SettingsPage,
+            },
+        ]
+    },
+    {
         path: '/home',
-        name: "HomePage",
-        component: HomePage,
+        name: "HomeView",
+        component: HomeView,
         children: [
             {
                 path: "",
                 name: "HomeIntro",
                 component: HomeIntro,
             },
-            {
-                path: 'wallet',
-                name: "WalletPage",
-                component: WalletPage,
-            },
-            {
-                path: 'channels',
-                name: "ChannelsPage",
-                component: ChannelsPage,
-            },
-            {
-                path: 'search',
-                name: "SearchPage",
-                component: SearchPage
-            },
-            {
-                path: 'node/:hash',
-                name: "ChannelNode",
-                component: ChannelNode
-            },
-            {
-                path: 'storage',
-                name: "StoragePage",
-                component: StoragePage
-            },
-            {
-                path: 'files',
-                name: "StorageFiles",
-                component: StorageFiles
-            },
-            {
-                path: 'drive',
-                name: "SecureDrive",
-                component: SecureDrive
-            },
-            {
-                path: 'downloads',
-                name: "DownloadPage",
-                component: DownloadPage
-            }
         ]
     },
 

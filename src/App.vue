@@ -6,13 +6,72 @@
 
 <script>
 const { ipcRenderer } = window.require("electron");
+import axios from 'axios';
+import { globalState, SetBlockchainStats } from './store';
+import { ref } from 'vue';
+
 export default {
     name: 'App',
     components: {},
+    data() {
+        return {
+            blockchain_height: 0,
+            heighest_block_number_discovered: 100,
+            syncing: true,
+            
+            interval: null,
+            numFailedCalls: 0,
+            failedAttempsError: ""
+        }
+    },
+    unmounted() {
+        clearInterval(this.interval)
+    },
     mounted() {
         let nodeKeyExists = ipcRenderer.sendSync("node-key-exists", {})
         if (nodeKeyExists) {
             this.$router.replace("/unlock")
+        }
+
+
+        this.interval = setInterval(async () => {
+            if (this.numFailedCalls > 50) {
+                clearInterval(this.interval);
+                this.failedAttempsError = "failed to connect to local node retried 50 times";
+                return;
+            }
+
+            await this.getStats()
+        }, 4000)
+
+    },
+    methods: {
+        async getStats() {
+            try {
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "filefilego.Stats",
+                    params: [{}],
+                    id: 1
+                };
+                const endpoint = ref(globalState.rpcEndpoint);
+                const response = await axios.post(endpoint.value, data);
+
+                this.blockchain_height = response.data.result.blockchain_height;
+                this.heighest_block_number_discovered = response.data.result.heighest_block_number_discovered;
+                if (this.heighest_block_number_discovered == 0) {
+                    this.heighest_block_number_discovered = 100;
+                }
+                if (this.blockchain_height > this.heighest_block_number_discovered) {
+                    this.heighest_block_number_discovered = this.blockchain_height;
+                }
+                this.syncing = response.data.result.syncing;
+
+                SetBlockchainStats(this.blockchain_height, this.heighest_block_number_discovered, this.syncing);
+                this.numFailedCalls = 0;
+            } catch (e) {
+                this.numFailedCalls++
+            }
         }
     }
 }

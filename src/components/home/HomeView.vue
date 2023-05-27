@@ -24,8 +24,8 @@
 </template>
   
 <script>
-import DashboardHeader from './DashboardHeader.vue'
-import SideBar from './SideBar.vue'
+import DashboardHeader from '../DashboardHeader.vue'
+import SideBar from '../SideBar.vue'
 export default {
   components: {
     DashboardHeader,

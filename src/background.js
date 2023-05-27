@@ -308,6 +308,66 @@ ipcMain.on("node-key-exists", (evt, arg) => {
   evt.returnValue = fileExists(path.join(homeDir, ".filefilego_data", "keystore", "node_identity.json"))
 });
 
+function findAddress(str) {
+  if (str.includes("Address:")) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function copyFileSync(sourcePath, destinationPath, destinationFileName) {
+  let sourceFile = path.basename(sourcePath);
+  if(destinationFileName != "") {
+    sourceFile = destinationFileName;
+  }
+  const destinationFile = path.join(destinationPath, sourceFile);
+  const destinationDir = path.dirname(destinationFile);
+
+  try {
+    // Create the destination directory if it doesn't exist
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir, { recursive: true });
+    }
+
+    fs.copyFileSync(sourcePath, destinationFile);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+ipcMain.on("check-key", async (evt, arg) => {
+  try {
+    if (fileExists(arg.path)) {
+      const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
+      const args = ["address", "info", arg.path, arg.password]
+      let res = ""
+      try {
+        res = await spawnSync(binaryPath, args)
+        if(findAddress(res)) {
+          let ok = copyFileSync(arg.path, path.join(homeDir, ".filefilego_data", "keystore"), "node_identity.json")
+          if(!ok) {
+            evt.returnValue = { error: "failed to copy wallet key file to filefilego home directory" }
+            return
+          }
+          evt.returnValue = { error: "" }
+        }
+
+      } catch (e) {
+        if(e.message.includes("mismatch")) {
+          evt.returnValue = { error: "wrong password" }
+        } else {
+          evt.returnValue = { error: e.message }
+        }
+      } 
+      return
+    }
+  } catch (e) {
+    evt.returnValue = { error: e.message }
+  }
+});
+
 ipcMain.on("create-node-identity", async (evt, arg) => {
   try {
     if (!fileExists(path.join(homeDir, ".filefilego_data", "keystore", "node_identity.json"))) {

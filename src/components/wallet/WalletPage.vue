@@ -322,12 +322,12 @@
       
 <script>
 import axios from 'axios';
-import { globalState} from '../store';
+import { globalState} from '../../store';
 import { ref, nextTick} from 'vue';
-import { Units } from "../unit.js"
+import { Units } from "../../unit.js"
 import BigNumber from 'bignumber.js';
 import numberToBN from "number-to-bn";
-import { callJsonRpc2Endpoint } from '../rpc'
+import { callJsonRpc2Endpoint } from '../../rpc'
 const { ipcRenderer } = window.require("electron");
 
 export default {

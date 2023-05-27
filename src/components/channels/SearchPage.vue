@@ -119,7 +119,7 @@
                                 <td>
                                     <div style="text-align: left; vertical-align: middle; padding-top:5px;">
                                         <router-link style="font-weight: bold"
-                                            :to="'/home/node/' + ch.node_hash"> {{ ch.name }}</router-link>
+                                            :to="'/channels/node/' + ch.node_hash"> {{ ch.name }}</router-link>
                                         <div v-if="ch.description != '' && ch.node_type <= 2 " style="font-size: 0.9em; padding: 0; margin: 0">
                                             {{ ch.description }}
                                         </div>
@@ -140,8 +140,8 @@
 <script>
 import axios from "axios";
 import { ref } from 'vue';
-import { globalState } from '../store';
-import ftype from "../filetype";
+import { globalState } from '../../store';
+import ftype from "../../filetype";
 
 export default {
     data() {
@@ -188,7 +188,7 @@ export default {
             return this.colors[which];
         },
         submit() {
-            this.$router.push("/home/search?query=" + this.query);
+            this.$router.push("/channels/search?query=" + this.query);
         },
         async search(query, search_type, size, currentPage) {
 

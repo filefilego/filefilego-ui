@@ -46,6 +46,7 @@
                     <table class="uk-table uk-table-striped uk-table-middle uk-table-justify">
                         <thead>
                             <tr>
+                                <th><span style="color:#000;"> </span></th>
                                 <th><span style="color:#000;"> File Name </span></th>
                                 <th><span style="color:#000;"> File Hash </span></th>
                                 <th><span style="color:#000;"> Merkle Hash </span></th>
@@ -54,11 +55,15 @@
                         </thead>
                         <tbody>
                             <tr style="" v-for="f in files" :key="f.hash">
-                                <td class="uk-text-truncate">
-                                   <span :uk-tooltip="f.file_name"> {{ f.file_name }} </span> 
+                                <td style="width:32px;">
+                                    <span uk-tooltip="File is on the network" v-if="f.remote_peer != ''" uk-icon="world"></span>
+                                    <span uk-tooltip="File is on your node" v-else uk-icon="desktop"></span>
                                 </td>
                                 <td class="uk-text-truncate">
-                                    {{ f.hash }}
+                                    <span style="cursor: pointer;" @click="copyClipboard(f.file_name)" uk-tooltip="Copy" uk-icon="icon:copy; ratio:0.9;"></span> <span :uk-tooltip="f.file_name"> {{ f.file_name }} </span> 
+                                </td>
+                                <td class="uk-text-truncate">
+                                    <span style="cursor: pointer;" @click="copyClipboard(f.hash)" uk-tooltip="Copy" uk-icon="icon:copy; ratio:0.9;"></span> {{ f.hash }}
                                 </td>
                                 <td class="uk-text-truncate">
                                     <span>
@@ -102,7 +107,7 @@
                 <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
                 <h2 style="font-size: 1.2em; font-weight: bold;" class="uk-modal-title">Upload files</h2>
                 <div style="padding: 10px; margin-top:10px;">
-                    <uploader-component parent="" place="storage" />
+                    <uploader-component :callback="reload" parent="" place="storage" />
                 </div>
             </div>
         </div>
@@ -164,6 +169,22 @@ export default {
 
     },
     methods: {
+        async reload() {
+            let page = this.$route.query.page || 1;
+            const req = {
+                originalUrl: "",
+                query: {
+                    include_metadata: "true",
+                    per_page: this.page_size,
+                    page: page,
+                },
+            };
+
+            await this.getFiles(req)
+        },
+        async copyClipboard(text) {
+            await navigator.clipboard.writeText(text);
+        },
         openUploadModal() {
             const myModal = document.getElementById('modal-upload');
             const modal = window.UIkit.modal(myModal);
@@ -284,7 +305,7 @@ export default {
     text-transform: none;
 }
 
-.storage-nav .router-link-active {
+.storage-nav .router-link-exact-active {
     color: #333;
     font-weight: bold;
 }

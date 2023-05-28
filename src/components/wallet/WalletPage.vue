@@ -76,6 +76,7 @@
                                     </div>
                                     <div class="uk-width-auto">
                                         <div style="margin-top:10px;">
+                                            <span v-if="tx.transaction.loading != null" class="uk-margin-small-right" uk-spinner="ratio: 0.7"></span>
                                             <span v-if="tx.transaction.data == '0x' || tx.transaction.data == '0x00'" style="border-radius:5px; display:inline-block; width:95px; color: #858484; border:1px solid #a7a7a7; text-align: center;">
                                                 transaction
                                             </span>
@@ -86,14 +87,14 @@
                                        
                                     </div>
                                     <div class="uk-width-auto">
-                                        <div style="text-align: center;">
+                                        <div v-if="tx.transaction.loading == null" style="text-align: center;">
                                             <span style="font-weight: bold; color:#000">{{ formatTimestamp(tx.timestamp).day }}</span>
                                             <br />
                                             <span style="font-weight: bold; color:#3e15ca">{{ formatTimestamp(tx.timestamp).month }}</span>
                                         </div>
                                     </div>
                                     <div class="uk-width-auto">
-                                        <span @click="openTxModal(tx)" style="cursor: pointer; margin-right:5px; margin-top:10px;" uk-icon="icon: more-vertical;"></span>
+                                        <span v-if="tx.transaction.loading == null" @click="openTxModal(tx)" style="cursor: pointer; margin-right:5px; margin-top:10px;" uk-icon="icon: more-vertical;"></span>
                                     </div>
                                 </div>
                             </li>
@@ -336,6 +337,7 @@ export default {
     data() {
         return {
             lastTXSent : "",
+            lastTX: null,
             loadingIntervalError: "",
             loadingInterval: false,
             tmpTXInfo: null,
@@ -467,6 +469,21 @@ export default {
 
             const endpoint = ref(globalState.rpcEndpoint);
             const response = await axios.post(endpoint.value, data);
+
+            let result = this.transactions.filter((o) => o.transaction.loading != undefined)
+            if(result.length > 0) {
+                let foundTx = false;
+                response.data.result.transactions.filter((o) => {
+                    if(o.transaction.hash == result[0].transaction.hash) {
+                        foundTx = true
+                    } 
+                })
+
+                if(!foundTx) {
+                    response.data.result.transactions.unshift(result[0])
+                }
+            }
+
             return response.data.result.transactions;
         },
         async reloadTransactions() {
@@ -495,7 +512,6 @@ export default {
         },
         async sendTransaction() {
             try {
-
                 if(!this.validateAddress(this.toAddress)) {
                     this.validateAddressError = "Address is invalid";
                 } else {
@@ -576,6 +592,8 @@ export default {
                 const jwtAccess = ref(globalState.jwtAccessToken);              
                 const response = await callJsonRpc2Endpoint("transaction.SendTransaction", [{ access_token: jwtAccess.value, nounce: balanceRes.next_nounce, data : "0x", from: this.nodeAddress , to: this.toAddress, value: "0x"+valueFFGOne, transaction_fees: "0x"+feesFFGOne }])
                 this.lastTXSent = response.data.result.transaction.hash
+                response.data.result.transaction.loading = true;
+                this.transactions.unshift({ transaction: response.data.result.transaction });
                 
                 const myModal = document.getElementById('modal-send')
                 const modal = window.UIkit.modal(myModal)

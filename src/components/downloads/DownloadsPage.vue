@@ -15,10 +15,6 @@
                             style=" padding:0px 10px; width:50px; height:40px; ">
                             <span style="color:#000;" class="uk-icon" uk-icon="icon: search"></span>
                         </button>
-                        <button class="uk-button ffg-button" style="margin-left:5px; width:150px; height:40px; ">
-                            New Channel
-                            <span class="uk-icon" uk-icon="icon: thumbnails"></span>
-                        </button>
                     </div>
                 </div>
             </div>

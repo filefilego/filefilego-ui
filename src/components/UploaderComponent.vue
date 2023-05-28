@@ -56,7 +56,7 @@
             <div style="text-align: center; padding-bottom: 10px;">
                 <span style="color:#000; font-weight: bold;"> Select files to upload on your local storage node:</span>
             </div>
-            <div v-if="globalState.node_type =='storage'" && filesQueue.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
+            <div v-if="globalState.node_type =='storage' && filesQueue.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
                 <div v-for="(u, idx) in filesQueue" :key="'up' + idx"
                     style="border-top:1px solid #ededed; padding:0px; margin:0px; padding-bottom:8px;" uk-grid>
                     <div class="uk-width-expand" style="vertical-align:middle;">
@@ -374,7 +374,7 @@ import { localNodeEndpoint } from "../rpc"
 export default {
     components: {
     },
-    props: ["parent", "place"],
+    props: ["parent", "place", "callback"],
     data() {
         return {
             loadingIntervalProgressBarNetworkUploads: null,
@@ -416,7 +416,7 @@ export default {
                     }
                 }
 
-                if (this.place == "storage") {
+                if(this.place == "storage") {
                     let totalCompleted = val.filter((o) => {
                         return o.from == 'storage' && o.progress > 0 && o.size == o.progress
                     }).length
@@ -427,6 +427,10 @@ export default {
                             this.loadingIntervalProgressBarNetworkUploads = null
                         }
                     }
+
+                    if(this.callback != null) {
+                        this.callback()
+                    }
                 }
             },
             deep: true
@@ -434,7 +438,7 @@ export default {
     },
     methods: {
         async startUploadingNetwork() {
-            const networkUploads = this.filesQueue.filter((o) => !o.rpc_upload);
+            const networkUploads = this.filesQueue.filter((o) => !o.rpc_upload).filter((o) => o.progress < o.size)
 
             if (networkUploads.length == 0) {
                 return

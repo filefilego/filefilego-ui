@@ -14,6 +14,8 @@ const globalState = reactive({
 
     ],
     // uploader
+    lastHowManyItemsToUpload: 0,
+    uploadingData: false,
     uploadEndpoint: "http://127.0.0.1:9036/uploads",
     upload_data: [],
     name_conflicts: [],
@@ -100,17 +102,25 @@ const asyncFunctionFactory = (item, storageAccessToken, uploadEndpoint) => {
                         item.file_hash = result.data.file_hash;
                         item.merkle_root_hash = result.data.merkle_root_hash;
                         item.progress = result.data.size
+
+                        if(item.upload_type == "other") {
+                            try {
+                                await callJsonRpc2Endpoint("storage.SaveUploadedFileMetadataLocally", [{ files: [{ file_name: result.data.file_name, merkle_root_hash: result.data.merkle_root_hash, hash: result.data.file_hash , file_path: "", size: result.data.size, remote_peer: uploadEndpoint }] }])
+                            } catch (e) {
+                                console.log(e);
+                            }
+                        }
                     }
                 }
 
                 if (filesQueue.length <= 1) {
-                    filesQueue.stop();
+                    StopUpload();
                 }
 
                 resolve("success");
             } catch (e) {
                 if (filesQueue.length <= 1) {
-                    filesQueue.stop();
+                    StopUpload();
                 }
 
                 item.error = e.message;
@@ -240,34 +250,7 @@ export function AddToDownloads(downloadItem) {
 
     globalState.downloads.push(downloadItem);
     fileDownloadsQueue.push(asyncDownloadFactory(globalState.downloads[globalState.downloads.length - 1]))
-
-    // if(downloadItem.destinationFolder && downloadItem.destinationFolder!= "") {
-    //     let found = globalState.downloads.filter((o) => o.destinationFolder == downloadItem.destinationFolder)
-    //     if(found.length > 0) {
-    //         // the download was found with the same
-
-    //         downloadItem.contracts.filter((j) => {
-    //             let foundItem = false;
-    //             found[0].contracts.filter((o) => {
-    //                 if(o.contract_hash == j.contract_hash) {
-    //                     foundItem = true;
-    //                 }
-    //             })
-    //             if(!foundItem) {
-    //                 // new items are here
-    //                 found[0].contracts.push(j);
-    //             }
-    //         })
-    //     } else {
-    //         globalState.downloads.push(downloadItem);
-    //         fileDownloadsQueue.push(asyncDownloadFactory(globalState.downloads[globalState.downloads.length - 1]))
-    //     }
-    // } else {
-    //     globalState.downloads.push(downloadItem);
-    //     fileDownloadsQueue.push(asyncDownloadFactory(globalState.downloads[globalState.downloads.length - 1]))
-    // }
-
-
+    
     return true;
 }
 
@@ -284,18 +267,22 @@ export function SetBlockchainStats(blockchain_height, heighest_block_number_disc
 
 export function SetRpcEndpoint(nodeType) {
     if (nodeType == "superlight") {
-        // globalState.rpcEndpoint = "https://rpc.filefilego.com/rpc";
-        globalState.rpcEndpoint = "http://validator.local:8090/rpc";
+        globalState.rpcEndpoint = "https://rpc.filefilego.com/rpc";
+        // globalState.rpcEndpoint = "http://validator.local:8090/rpc";
     } else {
         globalState.rpcEndpoint = "http://127.0.0.1:9036/rpc";
     }
 }
 
-export function StartUpload() {
+export function StartUpload(howManyItems) {
+    if(filesQueue.length == 0) return;
+    globalState.uploadingData = true;
+    globalState.lastHowManyItemsToUpload = howManyItems;
     filesQueue.start();
 }
 
 export function StopUpload() {
+    globalState.uploadingData = false;
     filesQueue.stop();
 }
 

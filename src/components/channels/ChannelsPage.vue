@@ -254,7 +254,6 @@ export default {
         };
         
         await this.getData(req);
-
     },
     methods: {
         async getData(req) {

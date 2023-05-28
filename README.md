@@ -1,24 +1,19 @@
-# filefilego-ui
+# FileFileGo UI
 
 ## Project setup
+Install NodeJS v16.20.0
+
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+The filefilego compiled binary must be copied to the bin directory before the electron application is executed.
 
-### Compiles and minifies for production
-```
-npm run build
-```
+All the platforms must use the compiled binary file named: "filefilego".
 
-### Lints and fixes files
-```
-npm run lint
-```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+Finally to run the electron application:
+
+```
+npm run electron:serve
+```

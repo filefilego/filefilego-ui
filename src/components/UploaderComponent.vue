@@ -56,8 +56,8 @@
             <div style="text-align: center; padding-bottom: 10px;">
                 <span style="color:#000; font-weight: bold;"> Select files to upload on your local storage node:</span>
             </div>
-            <div v-if="globalState.node_type =='storage' && filesQueue.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
-                <div v-for="(u, idx) in filesQueue" :key="'up' + idx"
+            <div v-if="globalState.node_type =='storage' && uploadData.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
+                <div v-for="(u, idx) in uploadData" :key="'up' + idx"
                     style="border-top:1px solid #ededed; padding:0px; margin:0px; padding-bottom:8px;" uk-grid>
                     <div class="uk-width-expand" style="vertical-align:middle;">
                         <div style="padding:10px;" uk-grid>
@@ -118,7 +118,7 @@
                     <span uk-icon="plus"></span>
                     <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
                         class="custom-file-upload">Add files</label>
-                    <input @change="selectFilesWithDestinationNode" style="display:none;" id="filesinput" type="file"
+                    <input ref="fileInputNode" @click="$refs.fileInputNode.value=null" @change="selectFilesWithDestinationNode" style="display:none;" id="filesinput" type="file"
                         multiple />
                 </span>
             </div>
@@ -129,8 +129,7 @@
                     Back
                     <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
                 </button>
-
-                <button v-if="globalState.node_type =='storage'" @click="startUploading" class="uk-button ffg-button">
+                <button :disabled="uploadingData" v-if="globalState.node_type =='storage'" @click="startUploading" class="uk-button ffg-button">
                     Upload
                     <span class="uk-icon" uk-icon="icon:  upload"></span>
                 </button>
@@ -152,8 +151,8 @@
                         class="uk-input" type="text" placeholder="Storage Access Token" aria-label="Input">
                 </div>
             </div>
-            <div v-if="filesQueue.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
-                <div v-for="(u, idx) in filesQueue" :key="'up' + idx"
+            <div v-if="uploadData.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
+                <div v-for="(u, idx) in uploadData" :key="'up' + idx"
                     style="border-top:1px solid #ededed; padding:0px; margin:0px; padding-bottom:8px;" uk-grid>
                     <div class="uk-width-expand" style="vertical-align:middle;">
                         <div style="padding:10px;" uk-grid>
@@ -210,7 +209,7 @@
                     <span uk-icon="plus"></span>
                     <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
                         class="custom-file-upload">Add files</label>
-                    <input @change="selectFilesWithDestinationOther" style="display:none;" id="filesinput" type="file"
+                    <input ref="fileInputOther" @click="$refs.fileInputOther.value=null" @change="selectFilesWithDestinationOther" style="display:none;" id="filesinput" type="file"
                         multiple />
                 </span>
             </div>
@@ -222,7 +221,7 @@
                     <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
                 </button>
 
-                <button @click="startUploading" class="uk-button ffg-button">
+                <button :disabled="uploadingData" @click="startUploading" class="uk-button ffg-button">
                     Upload
                     <span class="uk-icon" uk-icon="icon:  upload"></span>
                 </button>
@@ -269,8 +268,8 @@
             </div>
 
             <div v-else>
-                <div v-if="filesQueue.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
-                    <div v-for="(u, idx) in filesQueue" :key="'up' + idx">
+                <div v-if="uploadData.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
+                    <div v-for="(u, idx) in uploadData" :key="'up' + idx">
                         <div v-if="!u.rpc_upload"
                             style="border-top:1px solid #ededed; padding:0px; margin:0px; padding-bottom:8px;" uk-grid>
                             <div class="uk-width-expand" style="vertical-align:middle;">
@@ -327,7 +326,7 @@
                 </div>
                 <div v-else>
                     <div style="text-align: center;">
-                        <span style="color:#000"> Select files to upload to the selected peer:</span>
+                        <span style="font-weight: bold; color:#000"> Select files to upload to the selected peer:</span>
                     </div>
                 </div>
 
@@ -337,7 +336,7 @@
                         <span uk-icon="plus"></span>
                         <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
                             class="custom-file-upload">Add files</label>
-                        <input @change="selectFilesWithDestinationNetwork" style="display:none;" id="filesinput" type="file"
+                        <input ref="fileInputNetwork" @change="selectFilesWithDestinationNetwork" style="display:none;"  @click="$refs.fileInputNetwork.value=null" id="filesinput" type="file"
                             multiple />
                     </span>
                 </div>
@@ -388,10 +387,18 @@ export default {
 
     },
     computed: {
+        lastHowManyItemsToUpload() {
+            const data = ref(globalState.lastHowManyItemsToUpload);
+            return data.value
+        },
+        uploadingData() {
+            const data = ref(globalState.uploadingData);
+            return data.value
+        },
         globalState(){
             return globalState
         },
-        filesQueue() {
+        uploadData() {
             const data = ref(globalState.upload_data);
             return data.value
         },
@@ -401,18 +408,24 @@ export default {
         }
     },
     watch: {
-        filesQueue: {
+        uploadData: {
             handler(val) {
                 if (this.place == "channel") {
                     let totalCompleted = val.filter((o) => {
                         return o.from == 'channel' && o.progress > 0 && o.size == o.progress
                     }).length
 
-                    if (totalCompleted > 0 && totalCompleted == this.filesQueue.length) {
+                    if (totalCompleted > 0 && totalCompleted == this.lastHowManyItemsToUpload) {
                         if(this.loadingIntervalProgressBarNetworkUploads != null) {
                             clearInterval(this.loadingIntervalProgressBarNetworkUploads);
                             this.loadingIntervalProgressBarNetworkUploads = null
                         }
+
+                        alert("all files uploaded " + this.lastHowManyItemsToUpload )
+                    }
+
+                    if(this.callback != null) {
+                        this.callback()
                     }
                 }
 
@@ -421,7 +434,7 @@ export default {
                         return o.from == 'storage' && o.progress > 0 && o.size == o.progress
                     }).length
 
-                    if (totalCompleted > 0 && totalCompleted == this.filesQueue.length) {
+                    if (totalCompleted > 0 && totalCompleted == this.uploadData.length) {
                         if(this.loadingIntervalProgressBarNetworkUploads != null) {
                             clearInterval(this.loadingIntervalProgressBarNetworkUploads);
                             this.loadingIntervalProgressBarNetworkUploads = null
@@ -438,7 +451,7 @@ export default {
     },
     methods: {
         async startUploadingNetwork() {
-            const networkUploads = this.filesQueue.filter((o) => !o.rpc_upload).filter((o) => o.progress < o.size)
+            const networkUploads = this.uploadData.filter((o) => !o.rpc_upload).filter((o) => o.progress < o.size)
 
             if (networkUploads.length == 0) {
                 return
@@ -495,6 +508,7 @@ export default {
             for (let i = 0; i < e.target.files.length; i++) {
                 if (e.target.files[i].size <= 0) continue;
                 let payload = {
+                    upload_type : "network",
                     rpc_upload: false,
                     filepath: e.target.files[i].path,
                     from: this.place,
@@ -559,25 +573,31 @@ export default {
             return img;
         },
         startUploading() {
-            if (this.filesQueue.length == 0) {
-                return;
+            if(this.uploadingData) return;
+            if (this.uploadData.length == 0) return;
+
+            const uploads = this.uploadData.filter((o) => o.rpc_upload).filter((o) => o.progress < o.size)
+
+            if (uploads.length == 0) {
+                return
             }
 
-            StartUpload()
+            StartUpload(uploads.length)
         },
         selectFilesWithDestinationNode(e) {
             const storageAccessToken = ref(globalState.storageAccessToken);
             const uploadEndpoint = ref(globalState.uploadEndpoint);
-            this.selectFiles(e, storageAccessToken.value, uploadEndpoint.value);
+            this.selectFiles(e, storageAccessToken.value, uploadEndpoint.value, "node");
         },
         selectFilesWithDestinationOther(e) {
-            this.selectFiles(e, this.otherNodeStorageToken, this.otherNodeRPCEndpoint);
+            this.selectFiles(e, this.otherNodeStorageToken, this.otherNodeRPCEndpoint, "other");
         },
-        selectFiles(e, storageAccessToken, uploadEndpoint) {
+        selectFiles(e, storageAccessToken, uploadEndpoint, uploadType) {
             for (let i = 0; i < e.target.files.length; i++) {
                 if (e.target.files[i].size <= 0) continue;
 
                 let payload = {
+                    upload_type : uploadType,
                     rpc_upload: true,
                     filepath: "",
                     from: this.place,

@@ -172,8 +172,10 @@
                             </g>
                         </svg>
                         <div style="margin-top:15px;">
-                            You don't have any downloads yet. You can browse channels or use the search functionality here
-                            to locate and download a file from the network.
+                            <span style="color:#000">              
+                                You don't have any downloads yet. You can browse channels or use the search functionality here
+                                to locate and download a file from the network.
+                            </span>
                         </div>
                     </div>
 
@@ -556,7 +558,7 @@ export default {
                 }
 
             } else {
-                alert("paid")
+                alert("Internal paid error, implementation needed")
             }
         },
         totalSPFees(size, fees) {

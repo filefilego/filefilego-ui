@@ -108,7 +108,6 @@ const { ipcRenderer } = window.require("electron");
 import axios from 'axios';
 import { globalState, RemoveStorageProviders, SetStorageProviders} from '../../store';
 import { ref } from 'vue';
-import "/node_modules/flag-icons/css/flag-icons.min.css";
 import { Units } from "../../unit.js"
 import { localNodeEndpoint } from "../../rpc"
 import BigNumber from 'bignumber.js';

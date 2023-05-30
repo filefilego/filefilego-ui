@@ -149,8 +149,8 @@ async function createWindow() {
     frame: false,
     minWidth: 1024,
     width: 1024,
-    height: 600,
-    minHeight: 600,
+    height: 800,
+    minHeight: 800,
     icon: path.join(__static, "icon.png"),
     webPreferences: {
 
@@ -161,6 +161,8 @@ async function createWindow() {
       enableRemoteModule: true
     }
   })
+
+  win.maximize();
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode

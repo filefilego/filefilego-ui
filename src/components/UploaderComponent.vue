@@ -398,22 +398,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- <div style="padding-left:0px;" class="uk-width-auto">
-                                <div style="padding:5px;">
-                                    <span uk-tooltip="Remove" v-if="u.canceled || u.size == u.progress"
-                                        @click="removeItemFromUpload(idx)"
-                                        style="font-size:1.4em; margin-top:26px; display:inline-block;" uk-icon="icon:trash"
-                                        class="clickable"></span>
-                                    <span uk-tooltip="Cancel" v-else @click="cancelItemFromUpload(idx)"
-                                        style="font-size:1.4em; margin-top:26px; display:inline-block;" uk-icon="icon:trash"
-                                        class="clickable"></span>
-
-                                </div>
-                            </div> -->
                         </div>
-
-                        
-                        
                     </div>
 
                     <div style="text-align: center;">

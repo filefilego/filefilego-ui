@@ -8,10 +8,9 @@ import path from 'path';
 import fs from "fs";
 import { Units } from "./unit.js"
 import BigNumber from 'bignumber.js';
+
 const cryptoLib = require("crypto");
-
 const isDevelopment = process.env.NODE_ENV !== 'production'
-
 app.commandLine.appendSwitch('disable-color-correct-rendering');
 app.commandLine.appendSwitch('force-color-profile', 'srgb');
 

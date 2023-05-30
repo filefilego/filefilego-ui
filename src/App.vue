@@ -27,23 +27,34 @@ export default {
     unmounted() {
         clearInterval(this.interval)
     },
+    computed: {
+        nodeType() {
+            return globalState.node_type;
+        }
+    },
+    watch: {
+        nodeType(val) {
+            if(val == "storage" && this.interval == null ) {
+                this.interval = setInterval(async () => {
+                    if(globalState.node_type != "storage" && globalState.node_type != "") {
+                        clearInterval(this.interval);
+                    }
+
+                    if (this.numFailedCalls > 50) {
+                        clearInterval(this.interval);
+                        this.failedAttempsError = "failed to connect to local node retried 50 times";
+                        return;
+                    }
+
+                    await this.getStats()
+                }, 4000)
+            }
+        }
+    },
     mounted() {
         let nodeKeyExists = ipcRenderer.sendSync("node-key-exists", {})
         if (nodeKeyExists) {
             this.$router.replace("/unlock")
-        }
-
-
-        if(globalState.node_type == "storage") {
-            this.interval = setInterval(async () => {
-                if (this.numFailedCalls > 50) {
-                    clearInterval(this.interval);
-                    this.failedAttempsError = "failed to connect to local node retried 50 times";
-                    return;
-                }
-    
-                await this.getStats()
-            }, 4000)
         }
     },
     methods: {

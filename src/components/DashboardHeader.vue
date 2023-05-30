@@ -4,7 +4,7 @@
         @click="goBack"
         uk-icon="icon: arrow-left"
         class="clickable"
-        style="z-index: 99999999; display:inline-block; margin-top:10px; margin-left:10px; cursor: pointer; border: 1px solid; border-radius: 50%; padding: 5px; vertical-align: middle; font-size: 1.3em;"
+        style="-webkit-app-region:none; z-index: 99999999; display:inline-block; margin-top:10px; margin-left:10px; cursor: pointer; border: 1px solid; border-radius: 50%; padding: 5px; vertical-align: middle; font-size: 1.3em;"
         title=""
         aria-expanded="false"
       >

@@ -12,6 +12,9 @@ const cryptoLib = require("crypto");
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
+app.commandLine.appendSwitch('disable-color-correct-rendering');
+app.commandLine.appendSwitch('force-color-profile', 'srgb');
+
 let homeDir = app.getPath("home") + path.sep;
 if (homeDir != "") {
   fs.mkdirSync(homeDir + ".filefilego_data" + path.sep + "keystore", {
@@ -198,7 +201,7 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString())
     }
   }
-  tray = new Tray(path.join('public/icon.png'))
+  tray = new Tray(path.join(__static, "icon.png"))
   // tray = new Tray('/path/to/my/icon')
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Open', click: () => { win.show() } },

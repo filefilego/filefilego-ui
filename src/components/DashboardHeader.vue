@@ -1,5 +1,5 @@
 <template>
-    <div class="dashboard-header" style="">  
+    <div class="dashboard-header" style="-webkit-app-region:drag;">  
       <span
         @click="goBack"
         uk-icon="icon: arrow-left"
@@ -10,7 +10,7 @@
       >
       </span>
       <div
-        style="z-index: 99999999; position: fixed; right: 4px; top: 2px; margin-right: 8px; margin-top: 0px; "
+        style="-webkit-app-region:none; z-index: 99999999; position: fixed; right: 4px; top: 2px; margin-right: 8px; margin-top: 0px; "
       >
         <div style="margin-left: 5px; margin-right: 5px;">
           <span

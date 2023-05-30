@@ -34,16 +34,17 @@ export default {
         }
 
 
-        this.interval = setInterval(async () => {
-            if (this.numFailedCalls > 50) {
-                clearInterval(this.interval);
-                this.failedAttempsError = "failed to connect to local node retried 50 times";
-                return;
-            }
-
-            await this.getStats()
-        }, 4000)
-
+        if(globalState.node_type == "storage") {
+            this.interval = setInterval(async () => {
+                if (this.numFailedCalls > 50) {
+                    clearInterval(this.interval);
+                    this.failedAttempsError = "failed to connect to local node retried 50 times";
+                    return;
+                }
+    
+                await this.getStats()
+            }, 4000)
+        }
     },
     methods: {
         async getStats() {

@@ -77,7 +77,7 @@
   const { ipcRenderer } = window.require("electron");
   import WindowHeader from './WindowHeader.vue'
   import { callJsonRpc2Endpoint } from '../rpc'
-  import { SetJwtAccessToken, SetNodeAddress, SetNodeType, SetDownloadsPath, SetStoragePath, SetStorageAccessToken, SetStorageFees, SetRpcEndpoint, SetChannelOperationFees, SetStorageProviders} from '../store';
+  import { SetJwtAccessToken, SetNodeAddress, SetNodeType, SetDownloadsPath, SetStoragePath, SetStorageAccessToken, SetStorageFees, SetRpcEndpoint, SetChannelOperationFees, SetStorageProviders, SetDownloads} from '../store';
 
 
   export default {
@@ -158,6 +158,7 @@
         SetStorageAccessToken(settings.storageAccessToken);
         SetStorageFees(settings.storageFees);
         SetStorageProviders(settings.storage_providers);
+        SetDownloads(settings.downloads);
       },
       async unlock() {
         try {

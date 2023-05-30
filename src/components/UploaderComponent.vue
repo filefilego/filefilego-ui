@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div id="uploader-comp">
         <div v-if="uploadType == ''">
             <div style="text-align: center;">
                 <span style="color:#000"> Select where to upload your data to: </span>
@@ -355,20 +355,93 @@
                     <span class="uk-icon" uk-icon="icon:  upload"></span>
                 </button>
             </div>
-
-
         </div>
+
+
+        <div id="modal-sendFiles" uk-modal="container:#app; esc-close:false; bg-close:false; stack:true;">
+            <div  style="width:60%;" class="uk-modal-dialog uk-modal-body">
+                <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 style="font-size: 1.2em; font-weight: bold;" class="uk-modal-title">Save files in channel</h2>
+                <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
+                    <img style="height: 54px; background-color: white; width: 54px; border-radius: 50%;" src="/assets/icon.png" />                   
+                </div>
+                <div style="padding: 10px; margin-top:5px;">
+                    <div v-if="uploadData.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
+                        <div v-for="(u, idx) in uploadData" :key="'up' + idx"
+                            style="border-top:1px solid #ededed; padding:0px; margin:0px; padding-bottom:8px;" uk-grid>
+                            <div class="uk-width-expand" style="vertical-align:middle;">
+                                <div style="padding:10px;" uk-grid>
+                                    <div class="uk-width-1-1" style="padding:0px; margin:0px;">
+                                        <div
+                                            style="color:#3f383f;  -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; -webkit-line-clamp: 1; display: -webkit-box; color: #2c3e50; margin-bottom: 0; vertical-align: middle;">
+                                            <span v-if="u.type == 'dir'"
+                                                style="color:#818284; font-size:1.3em; vertical-align:middle;"
+                                                class="icon-folder"></span>
+                                            <img v-if="u.type == 'file'" :src="nodeVector(u.name)"
+                                                style="width:16px; height:16px; font-size: 32px; vertical-align: middle; " />
+                                            <span v-if="!u.canceled && u.error == ''"
+                                                style="margin-left:5px; font-size: 0.9em; vertical-align:middle;">{{ u.name
+                                                }}</span>
+                                            <span v-if="u.canceled || u.error != ''"
+                                                style="margin-left:5px; vertical-align:middle;">
+                                                <span style="text-decoration: line-through; color:red;">{{ u.name }}</span>
+                                                <span v-if="u.error != ''">({{ u.error }})</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="uk-width-expand" style="padding:0px; margin:0px;">
+                                        <span style="color:#000000; font-size: 0.9em;">{{ $filters.formatsize(u.progress) }} / {{
+                                            $filters.formatsize(u.size) }}</span>
+                                    </div>
+                                    <div class="uk-width-auto" style="padding:0px; margin:0px; vertical-align:middle;">
+                                        <span style="color:#000000; font-size: 0.9em; display:inline-block; ">{{ getProgress(u)
+                                        }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- <div style="padding-left:0px;" class="uk-width-auto">
+                                <div style="padding:5px;">
+                                    <span uk-tooltip="Remove" v-if="u.canceled || u.size == u.progress"
+                                        @click="removeItemFromUpload(idx)"
+                                        style="font-size:1.4em; margin-top:26px; display:inline-block;" uk-icon="icon:trash"
+                                        class="clickable"></span>
+                                    <span uk-tooltip="Cancel" v-else @click="cancelItemFromUpload(idx)"
+                                        style="font-size:1.4em; margin-top:26px; display:inline-block;" uk-icon="icon:trash"
+                                        class="clickable"></span>
+
+                                </div>
+                            </div> -->
+                        </div>
+
+                        
+                        
+                    </div>
+
+                    <div style="text-align: center;">
+                            <div style="text-align:center;" v-if="creatingFilesOnBlockchain">
+                                <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                            </div>
+                            <button v-if="!creatingFilesOnBlockchain" class="uk-button ffg-button" @click="saveFilesInBlockchain">
+                                Save Uploaded Files
+                                <span class="uk-icon" uk-icon="icon: check"></span>
+                            </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
     </div>
 </template>
 <script>
 const { ipcRenderer } = window.require("electron");
-import { globalState, AddToUploadData, StartUpload, RemoveItemFromUpload, CancelItemFromUpload, UpdateFileUploadToNetworkProgress } from '../store';
+import { globalState, AddToUploadData, StartUpload, RemoveItemFromUpload, CancelItemFromUpload, UpdateFileUploadToNetworkProgress, SetHowManyItemsToUpload } from '../store';
 import { ref } from 'vue';
 import ftype from "../filetype";
 import { Units } from "../unit.js"
 import BigNumber from 'bignumber.js';
 import axios from 'axios';
-import { localNodeEndpoint } from "../rpc"
+import { callJsonRpc2Endpoint, localNodeEndpoint } from "../rpc"
+import numberToBN from "number-to-bn";
 
 export default {
     components: {
@@ -380,11 +453,17 @@ export default {
             selectedStorageProviderPeerIDForUpload: "",
             otherNodeRPCEndpoint: "",
             otherNodeStorageToken: "",
-            uploadType: ""
+            uploadType: "",
+            nodeAddress:"",
+            creatingFilesOnBlockchain: false,
+            creatingFilesOnBlockchainError: "",
         }
     },
     async mounted() {
-
+        const addr = ref(globalState.nodeAddress);
+        if (addr.value != "") {
+            this.nodeAddress = addr.value;
+        }
     },
     computed: {
         lastHowManyItemsToUpload() {
@@ -412,7 +491,7 @@ export default {
             handler(val) {
                 if (this.place == "channel") {
                     let totalCompleted = val.filter((o) => {
-                        return o.from == 'channel' && o.progress > 0 && o.size == o.progress
+                        return o.from == 'channel' && ((o.progress > 0 && o.size == o.progress && o.file_hash != "") || (o.error != ""))
                     }).length
 
                     if (totalCompleted > 0 && totalCompleted == this.lastHowManyItemsToUpload) {
@@ -421,20 +500,16 @@ export default {
                             this.loadingIntervalProgressBarNetworkUploads = null
                         }
 
-                        alert("all files uploaded " + this.lastHowManyItemsToUpload )
-                    }
-
-                    if(this.callback != null) {
-                        this.callback()
+                        this.openSaveFilesModal();
                     }
                 }
 
                 if(this.place == "storage") {
                     let totalCompleted = val.filter((o) => {
-                        return o.from == 'storage' && o.progress > 0 && o.size == o.progress
+                        return o.from == 'storage' && (( o.progress > 0 && o.size == o.progress && o.file_hash != "") || (o.error != ""))
                     }).length
 
-                    if (totalCompleted > 0 && totalCompleted == this.uploadData.length) {
+                    if (totalCompleted > 0 && totalCompleted == this.lastHowManyItemsToUpload) {
                         if(this.loadingIntervalProgressBarNetworkUploads != null) {
                             clearInterval(this.loadingIntervalProgressBarNetworkUploads);
                             this.loadingIntervalProgressBarNetworkUploads = null
@@ -450,12 +525,107 @@ export default {
         }
     },
     methods: {
+        async saveFilesInBlockchain() {
+            const totalCompleted = this.uploadData.filter((o) => o.progress >= o.size).map((o) => {
+                return { 
+                    parent_hash: this.parent, 
+                    enabled: true, 
+                    description: "", 
+                    name: o.name, 
+                    node_type: 5, 
+                    timestamp: Math.floor(Date.now() / 1000),
+                    size: o.size,
+                    file_hash: o.file_hash,
+                    merkle_root: o.merkle_root_hash,
+                } 
+            })
+
+            if (totalCompleted.length == 0) {
+                return
+            }
+
+            const data = {
+                jsonrpc: '2.0',
+                method: "channel.CreateNodeItemsTxDataPayload",
+                params: [{ nodes: totalCompleted }],
+                id: 1
+            };
+
+            try {
+                const endpoint = ref(globalState.rpcEndpoint);
+                const response = await axios.post(endpoint.value, data);
+                let channelFees = numberToBN(response.data.result.total_fees_required);
+                let balanceRes = await this.getBalance();
+                let balanceFFGOneBig = numberToBN(balanceRes.balance_hex);
+                if (balanceFFGOneBig.lt(channelFees)) {
+                    throw new Error(
+                        `You don't have enough coins in your balance!`
+                    );
+                }
+
+                const jwtAccess = ref(globalState.jwtAccessToken);
+                const sendTxRes = await callJsonRpc2Endpoint("transaction.SendTransaction", [{ access_token: jwtAccess.value, nounce: balanceRes.next_nounce, data: response.data.result.transaction_data_payload_hex, from: this.nodeAddress, to: "0x01", value: "0x0", transaction_fees: response.data.result.total_fees_required }])
+                this.lastTXSent = sendTxRes.data.result.transaction.hash
+                this.creatingFilesOnBlockchain = true;
+
+                let tries = 0;
+                let loadTxInterval = setInterval(async() => {
+                    if(tries > 21) {
+                        this.creatingFilesOnBlockchainError = "It seems like there was an error sending your transaction. Please reload the page to see if your files were saved.";
+                        this.creatingFilesOnBlockchain = false;
+                        clearInterval(loadTxInterval);
+                        return
+                    }
+                    tries++;
+                    let res = await this.getTransaction(this.lastTXSent)
+                    if(res.transactions && res.transactions.length > 0) {
+                        this.creatingFilesOnBlockchain = false;
+                        clearInterval(loadTxInterval);
+
+                        this.closeSaveFilesModal();
+                        if(this.callback != null) {
+                            this.callback()
+                        }
+                        
+                        return
+                    }
+                }, 2000)
+
+            } catch (e) {
+                this.creatingFilesOnBlockchain = false;
+                this.creatingFilesOnBlockchainError = e.message;
+            }
+        },
+        async getTransaction(hash) {
+            const data = {
+                jsonrpc: '2.0',
+                method: "transaction.Receipt",
+                params: [{ hash: hash}],
+                id: 1
+            };
+            const endpoint = ref(globalState.rpcEndpoint);
+            const response = await axios.post(endpoint.value, data);
+            return response.data.result;
+        },
+        openSaveFilesModal() {
+            const myModal = document.getElementById('modal-sendFiles');
+            const modal = window.UIkit.modal(myModal);
+            modal.show();
+        },
+        closeSaveFilesModal() {
+            const myModal = document.getElementById('modal-sendFiles');
+            const modal = window.UIkit.modal(myModal);
+            modal.hide();
+        },
         async startUploadingNetwork() {
+
             const networkUploads = this.uploadData.filter((o) => !o.rpc_upload).filter((o) => o.progress < o.size)
 
             if (networkUploads.length == 0) {
                 return
             }
+
+            SetHowManyItemsToUpload(networkUploads.length);
 
             const files = [];
             networkUploads.filter((o) => {
@@ -493,7 +663,10 @@ export default {
 
                             const response = await axios.post(endpoint, data);
                             if(response.data.result.files != undefined) {
-                                UpdateFileUploadToNetworkProgress(response.data.result.files)
+                                let allCompleted = UpdateFileUploadToNetworkProgress(response.data.result.files);
+                                if(allCompleted) {
+                                    clearInterval(this.loadingIntervalProgressBarNetworkUploads);
+                                }
                             }
                         } catch (e) {
                             console.log(e.message)
@@ -566,7 +739,12 @@ export default {
         },
         getProgress(node) {
             let pg = parseInt((node.progress / node.size) * 100)
-            return pg > 100 ? 100 : pg;
+            let result = pg > 100 ? 100 : pg;
+            // make sure the file hash is there
+            if(result == 100 && node.file_hash == "") {
+                return 99;
+            }
+            return result
         },
         nodeVector(name) {
             let img = `/assets/file_types/${ftype.getVectorOf(ftype.getExt(name))}.svg`;
@@ -621,6 +799,17 @@ export default {
                     alert("storage access token is empty");
                 }
             }
+        },
+        async getBalance() {
+            const data = {
+                jsonrpc: '2.0',
+                method: "address.Balance",
+                params: [{ address: this.nodeAddress }],
+                id: 1
+            };
+            const endpoint = ref(globalState.rpcEndpoint);
+            const response = await axios.post(endpoint.value, data);
+            return response.data.result;
         },
         selectUploadType(uploadType) {
             this.uploadType = uploadType;

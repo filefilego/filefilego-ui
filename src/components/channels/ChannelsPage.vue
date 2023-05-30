@@ -256,6 +256,19 @@ export default {
         await this.getData(req);
     },
     methods: {
+        async reload() {
+            let page = this.$route.query.page || 1;
+            const req = {
+                originalUrl: "",
+                query: {
+                    include_metadata: "true",
+                    per_page: this.page_size,
+                    page: page,
+                },
+            };
+            
+            await this.getData(req);
+        },
         async getData(req) {
             const paginator = new Pagination.Pagination(req);
             const paginationParams = paginator.extractPaginationData();
@@ -338,19 +351,48 @@ export default {
                 const jwtAccess = ref(globalState.jwtAccessToken);   
                 const sendTxRes = await callJsonRpc2Endpoint("transaction.SendTransaction", [{ access_token: jwtAccess.value, nounce: balanceRes.next_nounce, data : response.data.result.transaction_data_payload_hex, from: this.nodeAddress , to: "0x01", value: "0x0", transaction_fees: response.data.result.total_fees_required }])
                 this.lastTXSent = sendTxRes.data.result.transaction.hash
-                this.channelCreated = true;                
-                this.closeCreateChannelModal()
+                              
+                
+                let tries = 0;
+                let loadTxInterval = setInterval(async() => {
+                    if(tries > 21) {
+                        this.createChannelError = "It seems like there was an error sending your transaction. Please reload the page to see if your channel was created.";
+                        this.creatingChannel = false;
+                        clearInterval(loadTxInterval);
+                        return
+                    }
+                    tries++;
+                    let res = await this.getTransaction(this.lastTXSent)
+                    if(res.transactions && res.transactions.length > 0) {
+                        this.channelCreated = true;  
+                        this.creatingChannel = false;
+                        clearInterval(loadTxInterval);
+                        await this.reload()
+                        this.closeCreateChannelModal();
+                        return
+                    }
+                }, 2000)
             } catch (e) {
                 this.createChannelError = e.message;
-            } finally {
                 this.creatingChannel = false;
-            }
+            } 
         },
         async getBalance() {
             const data = {
                 jsonrpc: '2.0',
                 method: "address.Balance",
                 params: [{ address: this.nodeAddress}],
+                id: 1
+            };
+            const endpoint = ref(globalState.rpcEndpoint);
+            const response = await axios.post(endpoint.value, data);
+            return response.data.result;
+        },
+        async getTransaction(hash) {
+            const data = {
+                jsonrpc: '2.0',
+                method: "transaction.Receipt",
+                params: [{ hash: hash}],
                 id: 1
             };
             const endpoint = ref(globalState.rpcEndpoint);

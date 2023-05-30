@@ -3,6 +3,8 @@ import queue from "queue";
 import axios from "axios";
 import uploader from "./uploader";
 import { callJsonRpc2Endpoint } from "./rpc.js"
+import path from "path"
+const { ipcRenderer } = window.require("electron");
 
 const globalState = reactive({
     blockchain_height: 0,
@@ -146,8 +148,39 @@ const asyncDownloadFileWithProgress = (fileItem) => {
                         fileItem.error = res.data.result.error;
                         reject(res.data.result.error);
                     }
-                    if(fileItem.progress >= fileItem.size) {
+
+                    if(fileItem.progress >= fileItem.size && res.data.result.file_concatenation) {
                         clearInterval(progressInterval)
+                        
+                        let fileName = ""
+                        for(let i=0; i< fileItem.contract.file_hoster_response.file_hashes.length;i++) {
+                            if(fileItem.contract.file_hoster_response.file_hashes[i] == fileItem.file_hash) {
+                                fileName = fileItem.contract.file_hoster_response.file_names[i];
+                            }
+                        }
+
+                        // restore the original file name
+                        if(fileName != "" && fileItem.free_download) {
+                            let restoredFilePath = path.join(globalState.downloadsPath, fileName)
+                            fileItem.restoredFilePath = restoredFilePath;
+                            await callJsonRpc2Endpoint("data_transfer.MoveDirectDownloadsToDestination", [{ contract_hash: fileItem.contract_hash, file_hashes: [fileItem.file_hash], restored_file_paths: [ restoredFilePath ] }])
+                        }
+
+                        if(!fileItem.free_download) {
+                            try {
+                                let sigResponse = await callJsonRpc2Endpoint("data_transfer.SendFileMerkleTreeNodesToVerifier", [{ contract_hash: fileItem.contract_hash, file_hash: fileItem.file_hash }])
+                                if(sigResponse.data.result.success) {
+                                    fileItem.sentSig = true;
+                                }
+                            } catch (e) {
+                                if (e.name == 'NetworkError') {
+                                    fileItem.sendSigError =  e.message;
+                                } else {
+                                    fileItem.sendSigError =  e.response.data.error;
+                                }
+                            }
+                        }
+
                         resolve(fileItem);
                     }
                 }, 1000)
@@ -165,25 +198,74 @@ const asyncDownloadFactory = (item) => {
     return () => {
         /* eslint-disable no-async-promise-executor */
         return new Promise(async (resolve, reject) => {
+            console.log("contract ", item)
             try {
                 item.started = true;
                 item.started_at = Date.now(); 
                 for(let i=0; i<item.contracts.length;i++) {
                    for(let j=0; j<item.contracts[i].file_hashes_needed.length;j++) {
                        item.fileDownloads.push({
+                           sendSigError: "",
+                           sentSig: false,
+                           free_download: item.free_download,
+                           restoredFilePath: "",
+                           contract: item.contracts[i],
                            contract_hash: item.contracts[i].contract_hash,
                            file_hash:  item.contracts[i].file_hashes_needed[j],
                            size:  item.contracts[i].file_hashes_needed_sizes[j],
                            progress: 0,
                            error: ""
                        })
+
                        item.queue.push(asyncDownloadFileWithProgress(item.fileDownloads[item.fileDownloads.length -1]))
                    }
                 }
+                
                 item.queue.start()
                 item.queue.addEventListener('end', e => {
                     item.finished_at = Date.now();
-                    resolve(e); 
+                    if(!item.free_download) {
+                        let tries = 0;
+                        let decryptInterval = setInterval(async() => {
+                            if(tries > 50) {
+                                clearInterval(decryptInterval);
+                                item.decryptionError = "Timeout asking verifier for decryption key";
+                            }
+                            tries++
+                            try {
+                                let res = await callJsonRpc2Endpoint("data_transfer.VerifierHasEncryptionMetadata", [ { contract_hash: item.contracts[0].contract_hash }] )
+                                if(res.data.result.verified) {
+                                    // decrypt all files
+                                    // TODO: refactor this so it getts the file names and hashes based on item.contracts[i].file_hashes_needed[j],
+                                    let filePaths = item.contracts[0].file_hoster_response.file_names.map((o) => {
+                                        return path.join(globalState.downloadsPath, o)
+                                    })
+
+                                    try {
+                                        let decryptionResult = await callJsonRpc2Endpoint("data_transfer.RequestEncryptionDataFromVerifierAndDecrypt", [ { contract_hash: item.contracts[0].contract_hash, file_hashes: item.contracts[0].file_hoster_response.file_hashes, file_merkle_root_hashes: item.contracts[0].file_hoster_response.file_merkle_root_hashes, restored_file_paths: filePaths}] )
+                                        if(decryptionResult.data.result.decrypted_file_paths.length == filePaths.length) {
+                                            item.decrypted = true;
+                                            clearInterval(decryptInterval);
+                                            ipcRenderer.sendSync("remove-folder", path.join(globalState.downloadsPath, item.contracts[0].contract_hash))
+                                        }
+                                    } catch (e) {
+                                        if (e.name == 'NetworkError') {
+                                            item.decryptionError = e.message;
+                                        } else {
+                                            item.decryptionError = e.response.data.error
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                console.log(e);
+                            }
+                        }, 3000)
+                    } else {
+                        item.decrypted = true;
+                        ipcRenderer.sendSync("remove-folder", path.join(globalState.downloadsPath, item.contracts[0].contract_hash))
+                    }
+
+                    resolve(e);
                 })
             } catch (e) {
                 reject(e);
@@ -274,6 +356,10 @@ export function SetRpcEndpoint(nodeType) {
     }
 }
 
+export function SetHowManyItemsToUpload(items) {
+    globalState.lastHowManyItemsToUpload = items;
+}
+
 export function StartUpload(howManyItems) {
     if(filesQueue.length == 0) return;
     globalState.uploadingData = true;
@@ -287,14 +373,36 @@ export function StopUpload() {
 }
 
 export function UpdateFileUploadToNetworkProgress(files) {
+    let completed = 0;
+    let atLeastOneWithoutMetadata = false;
     files.filter((o) => {
         globalState.upload_data.filter((j) => {
             if (o.file_path == j.filepath) {
+
+                // its an async operation, the API might get the full progress however the filemetadata wont
+                // be in leveldb when we read them, so we make sure to read 
+                // until we find metadata
+                if(o.metadata.merkle_root_hash == "") {
+                    atLeastOneWithoutMetadata = true;
+                }
+
                 j.progress = o.progress;
                 j.error = o.error;
+                j.merkle_root_hash = o.metadata.merkle_root_hash;
+                // j.size = o.metadata.size;
+                j.file_hash = o.metadata.hash;
+                if(j.progress >= j.size || j.error != "") {
+                    completed++
+                }
             }
         })
     })
+
+    if(atLeastOneWithoutMetadata) {
+        return false;
+    }
+
+    return completed == files.length;
 }
 
 export function CancelItemFromUpload(index) {
@@ -329,6 +437,16 @@ export function AddToUploadData(val, storageAccessToken, endPoint, onlyState) {
 
 export function SetStorageProviders(val) {
     globalState.storage_providers = val;
+}
+
+export function RemoveItemFromDownloads(index) {
+    globalState.downloads.splice(index, 1);
+}
+
+export function SetDownloads(val) {
+    if(val && val.length > 0) {
+        globalState.downloads = val;
+    }
 }
 
 export function RemoveStorageProviders(storage_provider_peer_addr) {

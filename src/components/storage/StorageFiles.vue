@@ -102,7 +102,7 @@
             </div>
         </div>
 
-        <div id="modal-upload" uk-modal="container:#files-container">
+        <div id="modal-upload" uk-modal="container:#files-container; esc-close:false; bg-close:false; ">
             <div style="padding-top:17px; width:60%; padding-bottom: 20px;" class="uk-modal-dialog uk-modal-body">
                 <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
                 <h2 style="font-size: 1.2em; font-weight: bold;" class="uk-modal-title">Upload files</h2>
@@ -145,7 +145,21 @@ export default {
             return globalState
         },
     },
-    watch: {},
+    watch: {
+        $route: async function() {
+            let page = this.$route.query.page || 1;
+            const req = {
+                originalUrl: "",
+                query: {
+                    include_metadata: "true",
+                    per_page: this.page_size,
+                    page: page,
+                },
+            };
+
+            await this.getFiles(req)
+        },
+    },
     unmounted() {
 
     },

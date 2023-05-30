@@ -221,7 +221,9 @@ ipcMain.on("run-ffg", (evt, arg) => {
     if (settings.node_type == "storage") {
       let feesBig = Units.convert(settings.storageFees, "FFG", "FFGOne")
       let feesBigVal = new BigNumber(feesBig, 10);
+      
       args.push("--storage")
+      args.push("--show_storage_capacity")
       args.push(`--storage_dir=${settings.storageFolder}`)
       args.push(`--storage_token=${settings.storageAccessToken}`)
       args.push(`--storage_fees_byte=${feesBigVal.toString(10)}`)
@@ -401,6 +403,24 @@ ipcMain.on("save-storage-providers", (evt, arg) => {
   }
 });
 
+ipcMain.on("save-downloads", (evt, arg) => {
+  try {
+    const settings = readJSONFile(path.join(homeDir, ".filefilego_data", "settings.json"))
+    if (settings.downloads == null) {
+      settings.downloads = [];
+    }
+
+    settings.downloads = arg;
+
+    saveJsonToFileSync(settings, path.join(homeDir, ".filefilego_data", "settings.json"))
+
+    evt.returnValue = { error: "" }
+
+  } catch (e) {
+    evt.returnValue = { error: e.message }
+  }
+});
+
 ipcMain.on("save-settings", (evt, arg) => {
   try {
     saveJsonToFileSync(arg, path.join(homeDir, ".filefilego_data", "settings.json"))
@@ -417,6 +437,25 @@ ipcMain.on("get-settings", (evt, arg) => {
   } catch (e) {
     evt.returnValue = { error: e.message }
   }
+});
+
+function deleteFolder(folderPath) {
+  if (fs.existsSync(folderPath)) {
+    fs.rmSync(folderPath, { recursive: true, force: true });
+      return true;
+  } else {
+    return false;
+  }
+}
+
+ipcMain.on("open-folder", (evt, arg) => {
+  shell.openPath(arg);
+  evt.returnValue = true;
+});
+
+
+ipcMain.on("remove-folder", (evt, arg) => {
+  evt.returnValue = deleteFolder(arg);
 });
 
 ipcMain.on("openUrl", (evt, arg) => {

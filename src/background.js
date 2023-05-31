@@ -14,12 +14,25 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 app.commandLine.appendSwitch('disable-color-correct-rendering');
 app.commandLine.appendSwitch('force-color-profile', 'srgb');
 
-let homeDir = app.getPath("home") + path.sep;
-if (homeDir != "") {
-  fs.mkdirSync(homeDir + ".filefilego_data" + path.sep + "keystore", {
-    recursive: true,
-  });
-}
+
+let binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
+let args = ["address", "data_dir"]
+let homeDir = ""
+spawnSync(binaryPath, args).then(result => {
+    let h = result.split("Default Data Directory::").filter((o) => o != "")
+    homeDir = h[0];
+    console.log(homeDir)
+    if (homeDir != "") {
+      fs.mkdirSync(homeDir + path.sep + "keystore", {
+        recursive: true,
+      });
+    }
+  })
+  .catch(error => {
+    console.error(error);
+});
+  
+  
 
 function fileExists(filePath) {
   try {
@@ -221,7 +234,7 @@ ipcMain.on("run-ffg", (evt, arg) => {
   const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
   const geolitePath = path.resolve(__dirname, "../", "bin", "GeoLite2-Country.mmdb");
   try {
-    const settings = readJSONFile(path.join(homeDir, ".filefilego_data", "settings.json"))
+    const settings = readJSONFile(path.join(homeDir, "settings.json"))
     if (settings.node_type == "storage") {
       let feesBig = Units.convert(settings.storageFees, "FFG", "FFGOne")
       let feesBigVal = new BigNumber(feesBig, 10);
@@ -311,7 +324,7 @@ ipcMain.on("ffg-output", (evt, arg) => {
 });
 
 ipcMain.on("node-key-exists", (evt, arg) => {
-  evt.returnValue = fileExists(path.join(homeDir, ".filefilego_data", "keystore", "node_identity.json"))
+  evt.returnValue = fileExists(path.join(homeDir, "keystore", "node_identity.json"))
 });
 
 function findAddress(str) {
@@ -352,7 +365,7 @@ ipcMain.on("check-key", async (evt, arg) => {
       try {
         res = await spawnSync(binaryPath, args)
         if(findAddress(res)) {
-          let ok = copyFileSync(arg.path, path.join(homeDir, ".filefilego_data", "keystore"), "node_identity.json")
+          let ok = copyFileSync(arg.path, path.join(homeDir, "keystore"), "node_identity.json")
           if(!ok) {
             evt.returnValue = { error: "failed to copy wallet key file to filefilego home directory" }
             return
@@ -376,7 +389,7 @@ ipcMain.on("check-key", async (evt, arg) => {
 
 ipcMain.on("create-node-identity", async (evt, arg) => {
   try {
-    if (!fileExists(path.join(homeDir, ".filefilego_data", "keystore", "node_identity.json"))) {
+    if (!fileExists(path.join(homeDir, "keystore", "node_identity.json"))) {
       const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
       const args = ["address", "create_node_key", arg.password]
       await spawnSync(binaryPath, args)
@@ -391,14 +404,14 @@ ipcMain.on("create-node-identity", async (evt, arg) => {
 
 ipcMain.on("save-storage-providers", (evt, arg) => {
   try {
-    const settings = readJSONFile(path.join(homeDir, ".filefilego_data", "settings.json"))
+    const settings = readJSONFile(path.join(homeDir, "settings.json"))
     if (settings.storage_providers == null) {
       settings.storage_providers = [];
     }
 
     settings.storage_providers = arg;
 
-    saveJsonToFileSync(settings, path.join(homeDir, ".filefilego_data", "settings.json"))
+    saveJsonToFileSync(settings, path.join(homeDir, "settings.json"))
 
     evt.returnValue = { error: "" }
 
@@ -409,14 +422,14 @@ ipcMain.on("save-storage-providers", (evt, arg) => {
 
 ipcMain.on("save-downloads", (evt, arg) => {
   try {
-    const settings = readJSONFile(path.join(homeDir, ".filefilego_data", "settings.json"))
+    const settings = readJSONFile(path.join(homeDir, "settings.json"))
     if (settings.downloads == null) {
       settings.downloads = [];
     }
 
     settings.downloads = arg;
 
-    saveJsonToFileSync(settings, path.join(homeDir, ".filefilego_data", "settings.json"))
+    saveJsonToFileSync(settings, path.join(homeDir, "settings.json"))
 
     evt.returnValue = { error: "" }
 
@@ -427,7 +440,7 @@ ipcMain.on("save-downloads", (evt, arg) => {
 
 ipcMain.on("save-settings", (evt, arg) => {
   try {
-    saveJsonToFileSync(arg, path.join(homeDir, ".filefilego_data", "settings.json"))
+    saveJsonToFileSync(arg, path.join(homeDir, "settings.json"))
     evt.returnValue = { error: "" }
   } catch (e) {
     evt.returnValue = { error: e.message }
@@ -436,7 +449,7 @@ ipcMain.on("save-settings", (evt, arg) => {
 
 ipcMain.on("get-settings", (evt, arg) => {
   try {
-    const settings = readJSONFile(path.join(homeDir, ".filefilego_data", "settings.json"))
+    const settings = readJSONFile(path.join(homeDir, "settings.json"))
     evt.returnValue = { error: "", settings: settings }
   } catch (e) {
     evt.returnValue = { error: e.message }

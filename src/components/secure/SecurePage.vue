@@ -9,14 +9,14 @@
     
         <div class="uk-text-center" style="">
           <h4
-            style="color: rgb(13, 13, 13); padding-bottom: 11px; font-weight: 700;">
+            style="padding-bottom: 11px;" class="app-header2">
             Under Development
           </h4>
         
           <span style="color: #000;" uk-icon="icon:lock; ratio:2;"></span>
     
           <div style="width:70%; margin:0 auto;">    
-            <p class="med-text" style="font-size:1em; margin-top:20px;  color:#000;">
+            <p class="normal-txt" style="font-size:1em; margin-top:20px;">
                 Secure Drive is under development. You will be able to use "Secure Drive" to store your personal data on the network by performing client side encryption first.
             </p>
           </div>

@@ -2,7 +2,7 @@
     <div id="uploader-comp">
         <div v-if="uploadType == ''">
             <div style="text-align: center;">
-                <span style="color:#000"> Select where to upload your data to: </span>
+                <span class="normal-txt" style="font-weight: 500;">  Select where to upload your data to: </span>
             </div>
             <div style="margin-top:20px; text-align: center;" class="uk-grid-match" uk-grid>
                 <div @click="selectUploadType('node')" class="uk-width-expand">
@@ -15,7 +15,7 @@
                                 </div>
                             </div>
                             <div>
-                                <span style="font-size:0.8em; color:#000; font-weight: bold;"> This Node </span>
+                                <span class="normal-txt" style="font-size:0.9em; font-weight: 500;"> This Node </span>
                             </div>
                         </div>
                     </div>
@@ -30,7 +30,7 @@
                                 </div>
                             </div>
                             <div>
-                                <span style="font-size:0.8em; color:#000; font-weight: bold;"> Network </span>
+                                <span class="normal-txt" style="font-size:0.9em; font-weight: 500;"> Network </span>
                             </div>
                         </div>
                     </div>
@@ -45,7 +45,7 @@
                                 </div>
                             </div>
                             <div>
-                                <span style="font-size:0.8em; color:#000; font-weight: bold;"> Other </span>
+                                <span class="normal-txt" style="font-size:0.9em; font-weight: 500;"> Other </span>
                             </div>
                         </div>
                     </div>
@@ -54,7 +54,7 @@
         </div>
         <div v-if="uploadType == 'node'">
             <div style="text-align: center; padding-bottom: 10px;">
-                <span style="color:#000; font-weight: bold;"> Select files to upload on your local storage node:</span>
+                <span class="normal-txt" style="font-weight: 500;"> Select files to upload to your local storage node:</span>
             </div>
             <div v-if="globalState.node_type =='storage' && uploadData.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
                 <div v-for="(u, idx) in uploadData" :key="'up' + idx"
@@ -109,15 +109,17 @@
                 </div>
             </div>
             <div style="margin-top:15px; text-align: center;" v-if="globalState.node_type !='storage'">
-                Your node is not a storage node. If you want to upload data directly to your node you should set up a storage node.
+                <span class="normal-txt"> 
+                    Your node is not a storage node. If you want to upload data directly to your node you should set up a storage node.
+                </span>
             </div>
 
-            <div v-if="globalState.node_type =='storage'" style="height: 40px; margin-top:5px; text-align: center;">
+            <div v-if="globalState.node_type =='storage' && !uploadingData" style="height: 40px; margin-top:15px; text-align: center;">
                 <span
                     style="padding: 10px; color: #ffff; background-color: #0160fe; border: 1px solid #0160fe; border-radius: 2px;">
-                    <span uk-icon="plus"></span>
+                    <span uk-icon="upload"></span>
                     <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
-                        class="custom-file-upload">Add files</label>
+                        class="custom-file-upload">Choose file</label>
                     <input ref="fileInputNode" @click="$refs.fileInputNode.value=null" @change="selectFilesWithDestinationNode" style="display:none;" id="filesinput" type="file"
                         multiple />
                 </span>
@@ -137,18 +139,18 @@
         </div>
         <div v-if="uploadType == 'other'">
             <div style="text-align: center; padding-bottom: 10px;">
-                <span style="color:#000; font-weight: bold;"> Enter the RPC endpoint and credentials to upload files to remote storage provider:</span>
+                <span class="normal-txt" style="font-weight: 500;"> Enter the RPC endpoint and credentials to upload files to remote storage provider:</span>
             </div>
             <div>
                 <div style=" width:100%;" class="uk-inline">
                     <span style="color: #000;" class="uk-form-icon" uk-icon="icon: world"></span>
-                    <input v-model="otherNodeRPCEndpoint" style="width:100%; border-radius: 4px; color:#000;"
-                        class="uk-input" type="text" placeholder="Upload Endpoint" aria-label="Input">
+                    <input v-model="otherNodeRPCEndpoint" style="width:100%; border-radius: 4px;"
+                        class="normal-txt uk-input" type="text" placeholder="Upload Endpoint" aria-label="Input">
                 </div>
                 <div style=" width:100%; margin-top:10px;" class="uk-inline">
                     <span style="color: #000;" class="uk-form-icon" uk-icon="icon: lock"></span>
-                    <input v-model="otherNodeStorageToken" style="width:100%; border-radius: 4px; color:#000;"
-                        class="uk-input" type="text" placeholder="Storage Access Token" aria-label="Input">
+                    <input v-model="otherNodeStorageToken" style="width:100%; border-radius: 4px;"
+                        class="normal-txt uk-input" type="text" placeholder="Storage Access Token" aria-label="Input">
                 </div>
             </div>
             <div v-if="uploadData.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
@@ -203,12 +205,12 @@
                 </div>
             </div>
 
-            <div style="height: 40px; margin-top:25px; text-align: center;">
+            <div v-if="!uploadingData" style="height: 40px; margin-top:25px; text-align: center;">
                 <span
                     style="padding: 10px; color: #ffff; background-color: #0160fe; border: 1px solid #0160fe; border-radius: 2px;">
-                    <span uk-icon="plus"></span>
+                    <span uk-icon="upload"></span>
                     <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
-                        class="custom-file-upload">Add files</label>
+                        class="custom-file-upload">Choose file</label>
                     <input ref="fileInputOther" @click="$refs.fileInputOther.value=null" @change="selectFilesWithDestinationOther" style="display:none;" id="filesinput" type="file"
                         multiple />
                 </span>
@@ -229,7 +231,7 @@
         </div>
         <div v-if="uploadType == 'network'">
             <div v-if="selectedStorageProviderPeerIDForUpload == ''" style="text-align: center; padding-bottom: 10px;">
-                <span style="color:#000; font-weight: bold;"> Select a storage provider from your saved list to upload data to:</span>
+                <span class="normal-txt" style="font-weight: 500;"> Select a storage provider from your saved list to upload data to:</span>
             </div>
             <div v-if="selectedStorageProviderPeerIDForUpload == ''" style="max-height:500px; overflow-y:auto;">
                 <table v-if="providers.length > 0" id="storage-providers" class="uk-table uk-table-striped uk-table-middle uk-table-justify">
@@ -326,16 +328,16 @@
                 </div>
                 <div v-else>
                     <div style="text-align: center;">
-                        <span style="font-weight: bold; color:#000"> Select files to upload to the selected peer:</span>
+                        <span class="normal-txt" style="font-weight:500;"> Select files to upload to the selected peer:</span>
                     </div>
                 </div>
 
-                <div style="height: 40px; margin-top:25px; text-align: center;">
+                <div v-if="!uploadingData" style="height: 40px; margin-top:25px; text-align: center;">
                     <span
                         style="padding: 10px; color: #ffff; background-color: #0160fe; border: 1px solid #0160fe; border-radius: 2px;">
-                        <span uk-icon="plus"></span>
+                        <span uk-icon="upload"></span>
                         <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
-                            class="custom-file-upload">Add files</label>
+                            class="custom-file-upload">Choose file</label>
                         <input ref="fileInputNetwork" @change="selectFilesWithDestinationNetwork" style="display:none;"  @click="$refs.fileInputNetwork.value=null" id="filesinput" type="file"
                             multiple />
                     </span>
@@ -349,7 +351,7 @@
                     <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
                 </button>
 
-                <button v-if="selectedStorageProviderPeerIDForUpload != ''" @click="startUploadingNetwork"
+                <button :disabled="uploadingData" v-if="selectedStorageProviderPeerIDForUpload != ''" @click="startUploadingNetwork"
                     class="uk-button ffg-button">
                     Upload
                     <span class="uk-icon" uk-icon="icon:  upload"></span>
@@ -419,7 +421,7 @@
 </template>
 <script>
 const { ipcRenderer } = window.require("electron");
-import { globalState, AddToUploadData, StartUpload, RemoveItemFromUpload, CancelItemFromUpload, UpdateFileUploadToNetworkProgress, SetHowManyItemsToUpload } from '../store';
+import { globalState, AddToUploadData, StartUpload, RemoveItemFromUpload, CancelItemFromUpload, UpdateFileUploadToNetworkProgress, SetHowManyItemsToUpload, StopUpload} from '../store';
 import { ref } from 'vue';
 import ftype from "../filetype";
 import { Units } from "../unit.js"
@@ -474,6 +476,11 @@ export default {
     watch: {
         uploadData: {
             handler(val) {
+                if(val.length == 0) {
+                    clearInterval(this.loadingIntervalProgressBarNetworkUploads);
+                    StopUpload()
+                }
+
                 if (this.place == "channel") {
                     let totalCompleted = val.filter((o) => {
                         return o.from == 'channel' && ((o.progress > 0 && o.size == o.progress && o.file_hash != "") || (o.error != ""))
@@ -499,10 +506,9 @@ export default {
                             clearInterval(this.loadingIntervalProgressBarNetworkUploads);
                             this.loadingIntervalProgressBarNetworkUploads = null
                         }
-                    }
-
-                    if(this.callback != null) {
-                        this.callback()
+                        if(this.callback != null) {
+                            this.callback()
+                        }
                     }
                 }
             },
@@ -604,7 +610,7 @@ export default {
         },
         async startUploadingNetwork() {
 
-            const networkUploads = this.uploadData.filter((o) => !o.rpc_upload).filter((o) => o.progress < o.size)
+            const networkUploads = this.uploadData.filter((o) => !o.rpc_upload).filter((o) => o.progress < o.size && o.error == "")
 
             if (networkUploads.length == 0) {
                 return
@@ -633,6 +639,7 @@ export default {
                 params: [{ files: files }],
                 id: 1
             };
+
             try {
                 const endpoint = localNodeEndpoint;
                 const response = await axios.post(endpoint, data);
@@ -650,6 +657,7 @@ export default {
                             if(response.data.result.files != undefined) {
                                 let allCompleted = UpdateFileUploadToNetworkProgress(response.data.result.files);
                                 if(allCompleted) {
+                                    StopUpload()
                                     clearInterval(this.loadingIntervalProgressBarNetworkUploads);
                                 }
                             }
@@ -666,6 +674,7 @@ export default {
             for (let i = 0; i < e.target.files.length; i++) {
                 if (e.target.files[i].size <= 0) continue;
                 let payload = {
+                    remote_peer: this.selectedStorageProviderPeerIDForUpload,
                     upload_type : "network",
                     rpc_upload: false,
                     filepath: e.target.files[i].path,
@@ -739,7 +748,7 @@ export default {
             if(this.uploadingData) return;
             if (this.uploadData.length == 0) return;
 
-            const uploads = this.uploadData.filter((o) => o.rpc_upload).filter((o) => o.progress < o.size)
+            const uploads = this.uploadData.filter((o) => o.rpc_upload).filter((o) => o.progress < o.size && !o.canceled && o.error == "")
 
             if (uploads.length == 0) {
                 return
@@ -760,6 +769,7 @@ export default {
                 if (e.target.files[i].size <= 0) continue;
 
                 let payload = {
+                    remote_peer: "",
                     upload_type : uploadType,
                     rpc_upload: true,
                     filepath: "",

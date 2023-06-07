@@ -15,11 +15,11 @@
             <div>
                 <div style="padding-top:20px;" class="uk-text-center">
                     <div class="">
-                        <label style="color:#000"><input v-model="searchType" class="uk-radio" type="radio" name="radio2"
+                        <label class="normal-txt"><input v-model="searchType" class="uk-radio" type="radio" name="radio2"
                                 value="all" checked />
                             Match all words
                         </label>
-                        <label style="color:#000"><input v-model="searchType" class="uk-radio" type="radio" name="radio2"
+                        <label class="normal-txt"><input v-model="searchType" class="uk-radio" type="radio" name="radio2"
                                 value="any" />
                             Match any word
                         </label>
@@ -37,7 +37,7 @@
 
                     <div style="width:60%; margin-top:20px;" class="uk-search uk-search-default">
                         <span uk-search-icon></span>
-                        <input id="searchinpt" @keypress.enter="submit" v-model="query" class="uk-search-input"
+                        <input id="searchinpt" @keypress.enter="submit" v-model="query" class="uk-search-input normal-txt"
                             type="search" placeholder="Search..." />
                     </div>
                     <button @click="submit" style="background-color:#2c0fcd; color:white;"
@@ -48,25 +48,13 @@
             </div>
 
             <div v-show="nodes.length == 0 && !loading" class="uk-text-center" style="padding-top:20px;">
-                <div
-                    style="background-color:#fff; border-radius:50%; border:2px solid #3e15ca; width:120px; height:120px; text-align:center; margin:0 auto;">
-                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="70px"
-                        width="70px" fill="#3e15ca" version="1.1" x="0px" y="0px" viewBox="0 0 28 26" xml:space="preserve"
-                        style="margin-top: 30px; fill: #3e15ca;enable-background:new 0 0 28 26;">
-                        <g>
-                            <polygon points="10,7 5,0 0,7 5,7 5,14 12.995,17.998 28,3 15,3  "></polygon>
-                            <polygon points="18,14.406 13.541,18.865 18,26  "></polygon>
-                        </g>
-                    </svg>
-                </div>
-
                 <div style="width:70%; margin:0 auto;">
                     <p v-if="submited" class="med-text"
-                        style="color:black; font-weight:bold; font-size:1em; margin-top:20px;">
-                        <span class="icon-notification"></span> We could not find any results matching your search query.
+                        style="font-size:1em; margin-top:20px;">
+                        <span uk-icon="warning"></span> We could not find any results matching your search query.
                         Would you like to try a different search term instead?
                     </p>
-                    <p v-else class="med-text" style="color:black; font-weight:bold; font-size:1.1em; margin-top:20px;">
+                    <p v-else class="normal-txt" style="font-size:1em; margin-top:20px;">
                         Your search results will be available here
                     </p>
                 </div>

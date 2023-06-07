@@ -9,8 +9,8 @@
 
     <div class="uk-text-center" style="">
       <h4
-        style="color: rgb(13, 13, 13); padding-bottom: 11px; font-weight: 700;">
-        FileFileGo UI Application
+        style="padding-bottom: 11px;" class="app-header2">
+        FileFileGo
       </h4>
       <div
         style="background-color:#fff; border-radius:50%; border:2px solid #3e15ca; width:120px; height:120px; text-align:center; margin:0 auto;"
@@ -38,12 +38,12 @@
       </div>
 
       <div style="width:70%; margin:0 auto;">
-        <p class="med-text" style="font-size:1em; margin-top:20px; color:#000;">
-          This software enables the user to efficiently send and receive "FFG", which are the native filefilego coins. In addition, the user can seamlessly navigate the blockchain by accessing the "Channels" tab and retrieve any relevant information that is stored within the decentralized network.
+        <p class="normal-txt" style="margin-top:20px;">
+          This software simplifies the process of sending and receiving "FFG" coins. Users can easily navigate the blockchain by accessing the "Channels" tab and retrieve any necessary information stored in the decentralized network. 
         </p>
 
-        <p class="med-text" style="font-size:1em; margin-top:20px;  color:#000;">
-          You can use "Secure Drive" to store your personal data on the network by performing client side encryption.
+        <p class="normal-txt" style="margin-top:20px;">
+          The software also offers the option to store personal data securely on the network through the "Secure Drive" feature.
         </p>
       </div>
     </div>

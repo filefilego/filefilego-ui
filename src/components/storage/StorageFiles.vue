@@ -25,7 +25,7 @@
                         <li>
                             <router-link style="text-transform: none;" to="/storage/files">
                                 <span uk-icon="icon:database; ratio:1"></span>
-                                Uploaded files
+                                Files
                             </router-link>
                         </li>
                     </ul>
@@ -33,24 +33,25 @@
                 <div class="uk-navbar-right">
                     <ul class="uk-navbar-nav">
                         <li>
-                            <span @click="openUploadModal" style="color: #1e87f0; font-weight: bold; text-transform: none; cursor: pointer;">
-                                <span uk-icon="icon:upload; ratio:1"></span>
+                            <button @click="openUploadModal" class="uk-button ffg-button"
+                                style="width:180px; height:40px; ">
                                 Upload
-                            </span>
+                                <span class="uk-icon" uk-icon="icon: upload"></span>
+                            </button>
                         </li>
                     </ul>
                 </div>
             </nav>
             <div style="border:1px solid #d7d7d7; border-radius: 2px;">
                 <div style="padding:10px;">
-                    <table class="uk-table uk-table-striped uk-table-middle uk-table-justify">
+                    <table v-if="files.length > 0" class="uk-table uk-table-striped uk-table-middle uk-table-justify">
                         <thead>
                             <tr>
                                 <th><span style="color:#000;"> </span></th>
-                                <th><span style="color:#000;"> File Name </span></th>
-                                <th><span style="color:#000;"> File Hash </span></th>
-                                <th><span style="color:#000;"> Merkle Hash </span></th>
-                                <th style="width:130px;"> <span style="color:#000;"> Size </span></th>
+                                <th style="text-transform:none;"><span style="color:#000;"> File Name </span></th>
+                                <th style="text-transform:none;"><span style="color:#000;"> File Hash </span></th>
+                                <!-- <th style="text-transform:none;"><span style="color:#000;"> Merkle Hash </span></th> -->
+                                <th style="width:130px; text-transform:none;"> <span style="color:#000;"> Size </span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -59,18 +60,18 @@
                                     <span uk-tooltip="File is on the network" v-if="f.remote_peer != ''" uk-icon="world"></span>
                                     <span uk-tooltip="File is on your node" v-else uk-icon="desktop"></span>
                                 </td>
-                                <td class="uk-text-truncate">
+                                <td class="normal-txt uk-text-truncate">
                                     <span style="cursor: pointer;" @click="copyClipboard(f.file_name)" uk-tooltip="Copy" uk-icon="icon:copy; ratio:0.9;"></span> <span :uk-tooltip="f.file_name"> {{ f.file_name }} </span> 
                                 </td>
-                                <td class="uk-text-truncate">
+                                <td class="normal-txt uk-text-truncate">
                                     <span style="cursor: pointer;" @click="copyClipboard(f.hash)" uk-tooltip="Copy" uk-icon="icon:copy; ratio:0.9;"></span> {{ f.hash }}
                                 </td>
-                                <td class="uk-text-truncate">
+                                <!-- <td class="uk-text-truncate">
                                     <span>
                                         {{ f.merkle_root_hash }}
                                     </span>
-                                </td>
-                                <td>
+                                </td> -->
+                                <td class="normal-txt">
                                     <span>
                                         {{  $filters.formatsize(f.size)  }}
                                     </span>
@@ -88,7 +89,7 @@
 
                     <div style="text-align: center; padding: 20px 0px;" v-if="files.length == 0">
                         <span style="color:#000;" uk-icon="icon: database; ratio:2;"></span>
-                        <div style="margin-top:15px; color:#000;">
+                        <div class="normal-txt" style="margin-top:15px;">
                             There are no files on this node, you can upload files to this node or if you are running a public storage provider users uploads will be shown here.
                         </div>
                     </div>
@@ -105,7 +106,7 @@
         <div id="modal-upload" uk-modal="container:#files-container; esc-close:false; bg-close:false; ">
             <div style="padding-top:17px; width:60%; padding-bottom: 20px;" class="uk-modal-dialog uk-modal-body">
                 <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
-                <h2 style="font-size: 1.2em; font-weight: bold;" class="uk-modal-title">Upload files</h2>
+                <h2 class="modal-header">Upload files</h2>
                 <div style="padding: 10px; margin-top:10px;">
                     <uploader-component :callback="reload" parent="" place="storage" />
                 </div>

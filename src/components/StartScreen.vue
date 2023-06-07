@@ -15,14 +15,14 @@
             <li></li>
         </ul>
         <div>
-          <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;" src="/assets/icon.png" />
-        </div>
-        <div style="margin-top:2px;">
-            <span style="color: #fff; font-size: 30px;"> FILEFILEGO</span>
-        </div>
-        <div style="margin-top:2px; padding-bottom: 10px;">
-            <span style="color: #fff; font-size: 25px; font-weight: bold;">Decentralized Data Sharing Network</span>
-        </div> 
+            <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;" src="/assets/icon.png" />
+          </div>
+          <div style="margin-top:13px;">
+              <span class="app-header" style="color: #fff;"> FILEFILEGO</span>
+          </div>
+          <div style="margin-top:13px; padding-bottom: 13px;">
+              <span class="app-header" style="color: #fff;">Decentralized Data Sharing Network</span>
+          </div> 
 
       <!-- Hello world
       <input type="button" @click="run"  value="Run" /> -->
@@ -101,10 +101,10 @@
             </g>
             </svg>
         </div>
-        <span class="uk-text-lead uk-text-bold">Welcome to FileFileGo UI</span>
+        <span class="app-header2">Welcome to FileFileGo UI</span>
         <br />
         <div style="margin-top:30px; padding:20px;">
-          <span class="uk-text-default" style="color:#000;">
+          <span class="normal-txt">
             It appears that this is your initial experience with this application.
             we will now proceed to set up the necessary application settings in the following steps.
           </span>

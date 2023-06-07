@@ -20,7 +20,7 @@
     <ul class="uk-nav-default uk-nav uk-nav-parent-icon uk-nav" uk-nav>
       <router-link to="/home">
         <li class="uk-text-center main-sidebar-item" style="font-size: 1em; padding-left: 12px; padding: 12px;">
-          <span uk-icon="icon: world"></span>
+          <span uk-icon="icon: home"></span>
           <div>Home</div>
         </li>
       </router-link>

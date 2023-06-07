@@ -4,7 +4,7 @@
             <div style="padding-left: 15px; padding-bottom: 15px; padding-top: 15px; padding-right: 15px;"
                 class="uk-grid-match" uk-grid>
                 <div class="uk-width-expand">
-                    <h4 style="color: rgb(13, 13, 13);  font-weight: 700; margin-top:10px;">
+                    <h4 class="modal-header" style="margin-top:10px;">
                         Create entry under: <b style="color:#1e87f0;"> {{ node.name }} </b>
                     </h4>
                 </div>
@@ -15,12 +15,12 @@
                 </div>
             </div>
             <div style="padding-left: 15px; padding-bottom: 15px; padding-right: 15px;">
-                <span style="color: rgb(13, 13, 13);  font-weight: 700; margin-top:10px;">
+                <span class="normal-txt" style="margin-top:10px;">
                        Name:
                 </span>
                 <div style=" width:100%;" class="uk-inline">
                         <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
-                        <input v-model="entryName" style="width:100%; border-radius: 4px; color:#000;" class="uk-input" type="text" placeholder="Entry Name" aria-label="Input">
+                        <input v-model="entryName" style="width:100%; border-radius: 4px;" class="uk-input normal-txt" type="text" placeholder="Entry Name" aria-label="Input">
 
                         
                 </div>
@@ -29,9 +29,10 @@
                 </div>
             
                 <div style="margin-top:10px;">
-                    <span style="color: rgb(13, 13, 13);  font-weight: 700; margin-top:10px;">
+                    <span class="normal-txt" style="margin-top:10px;">
                            Description:
                     </span>
+
                     <QuillEditor style="height:300px;" contentType="html" v-model:content="entry_content" :options="toolbarOptions" theme="snow" />
                     
                     <div style="text-align:center; margin-top:10px;" v-if="creatingEntry">
@@ -99,14 +100,14 @@
                 <div v-if="loadingNode" style="padding:0px 10px; text-align: center;">
                     <div style="border:1px solid #d7d7d7; border-radius: 2px;">
                         <div style="margin-top:50px;">
-                            <span style="color:#000; font-size: 25px; font-weight: bold;">Loading page</span>
+                            <span class="app-header2">Loading page</span>
                         </div>
                         <div style="margin-top:18px; padding-bottom:30px;">
                             <div style="margin-top:35px;">
                                 <div class="uk-margin">
                                     <span class="uk-margin-small-right" uk-spinner="ratio: 3"></span>
                                 </div>
-                                <span class="uk-text-small">Please wait while we load the page</span>
+                                <span class="normal-txt">Please wait while we load the page</span>
                             </div>
                         </div>
                     </div>
@@ -116,7 +117,7 @@
                     <div v-if="node.node_hash == ''" style="padding:0px 10px; text-align: center;">
                         <div style="border:1px solid #d7d7d7; border-radius: 2px;">
                             <div style="margin-top:50px;">
-                                <span style="color:#000; font-size: 25px; font-weight: bold;">Channel item was not
+                                <span class="app-header2">Channel item was not
                                     found</span>
                             </div>
                             <div style="margin-top:18px; padding-bottom:30px;">
@@ -130,7 +131,7 @@
                                                 d="M90,39a4,4,0,0,0-3.86,3H83v8.36l-3.11-3.11L66.38,52.13l-3.17,8.79L54,56.6l-8.62,4,4-8.07-4.53-5.72L51.73,40h5.41a4,4,0,1,0,0-2H50.9l-7.29,7.29-3.14-4-7.34-.17,2.89-8-4.28-4.28L39.63,21H50.14a4,4,0,1,0,0-2H38.81l-8.48,8.48L27,24.15V13H37.14a4,4,0,1,0,0-2H25V24L12.85,28.38,8,41.89l9.66,9.66,3.94-1.42L20,53.24l4.31,5.44L19,64H12.86a4,4,0,1,0,0,2h7l5.74-5.74L29,64.49l12,.27V70H30.86a4,4,0,1,0,0,2H41v4.37l5,2.35V82H37.86a4,4,0,1,0,0,2H48V79.66l6,2.81,6-2.81V87H76.14a4,4,0,1,0,0-2H62V78.72l5-2.35V71.12l4.17,4.17,13.5-4.87,4.88-13.51L85,52.36V44h1.14A4,4,0,1,0,90,39ZM61,37a2,2,0,1,1-2,2A2,2,0,0,1,61,37ZM54,18a2,2,0,1,1-2,2A2,2,0,0,1,54,18ZM41,10a2,2,0,1,1-2,2A2,2,0,0,1,41,10ZM9,67a2,2,0,1,1,2-2A2,2,0,0,1,9,67Zm18,6a2,2,0,1,1,2-2A2,2,0,0,1,27,73Zm7,12a2,2,0,1,1,2-2A2,2,0,0,1,34,85Zm46-1a2,2,0,1,1-2,2A2,2,0,0,1,80,84ZM68,53.69l9.91-3.58L74,59.7l-7.56,2.73L65,61.78ZM65,65.07v1.22l-.9-.9Zm-2.47-2.26L62.1,64l-7.83,3.32L45.06,63,54,58.81Zm-23-19.51L46,51.57l-10.33-.63-4.19-5.29.9-2.5Zm-10-.22.83,0-.26.71Zm-.94,2.41-2.95,1.06,1.34-2.68ZM31,41.12,26.91,41l-4.52-4.51,4.07-10.07,7.25,7.25ZM14.42,30l9.91-3.58L20.46,36,11,39.36Zm3.74,19.29-7.59-7.59L21,37.9l4.48,4.48-2.57,5.15Zm6.14-.1,5.78-2.08,4,5-4.78,9.6L22.39,53ZM31,62.54,35.81,53l10.84.66L42.46,62,41,62.7v.06ZM43,64.8h.31l.17-.34L53,68.94V79.79L43,75.1ZM65,75.1,55,79.79V69.19l7.07-3L65,69.12Zm2-6.81v-4l7.49-2.7,7.58,7.59L71.69,73Zm16.49-.47-7.57-7.57L80,50.18l7.25,7.25ZM90,45a2,2,0,1,1,2-2A2,2,0,0,1,90,45Z" />
                                         </svg>
                                     </div>
-                                    <span style="color:#000;">
+                                    <span class="normal-txt">
                                         This page was not found, please go to the Channels section and create a channel.
                                     </span>
                                 </div>
@@ -185,7 +186,7 @@
                                                 </div>
                                             </td>
                                             <td style="vertical-align: middle; text-align:right;">
-                                                <div>{{ $filters.timestamptodate(ch.timestamp) }}</div>
+                                                <div class="normal-txt">{{ $filters.timestamptodate(ch.timestamp) }}</div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -333,7 +334,7 @@
                                                 </div>
                                             </td>
                                             <td style="vertical-align: middle; text-align:right;">
-                                                <div>{{ $filters.timestamptodate(ch.timestamp) }}</div>
+                                                <div class="normal-txt">{{ $filters.timestamptodate(ch.timestamp) }}</div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -438,7 +439,7 @@
                         <div v-else>
                             <!-- entry  -->
                             <div v-if="node.node_type == 3 || node.node_type == 4" style="padding-left: 15px; padding-bottom: 15px; padding-right: 15px;">
-                               <div v-if="node.node_type == 3" v-html="node.description"></div>
+                               <div class="normal-txt" v-if="node.node_type == 3" v-html="node.description"></div>
                                 <div v-if="node.nodes.length > 0">
                                     <h4
                                         style="color: rgb(13, 13, 13);  font-weight: 700; padding-top:5px; padding-bottom:5px; margin:0px;">
@@ -490,12 +491,12 @@
                                <div style="text-align: center;">
                                     <img style="width:64px; height:64px;" v-if="node.node_type==5" :src="nodeVector(node.name)" />
                                     <div style="margin-top:10px; text-align:left;">
-                                        <br /> <span style="color:#000; font-weight:bold;"> Name: </span><span style="color:#000;"> {{ node.name }} </span>
-                                        <br /> <span style="color:#000; font-weight:bold;"> File Hash: </span><span style="color:#000;"> {{ node.file_hash }} </span>
-                                        <br /> <span style="color:#000; font-weight:bold;"> File Merkle Hash: </span><span style="color:#000;"> {{ node.merkle_root }} </span>
-                                        <br /> <span style="color:#000; font-weight:bold;"> File Node Hash: </span><span style="color:#000;"> {{ node.node_hash }} </span>
-                                        <br /> <span style="color:#000; font-weight:bold;"> Size: </span><span style="color:#000;"> {{ $filters.formatsize(node.size) }}</span>
-                                        <br /> <span style="color:#000; font-weight:bold;"> Created At: </span><span style="color:#000;"> {{ $filters.timestamptodate(node.timestamp) }} </span>
+                                        <br /> <span class="normal-txt" style="font-weight:500;"> Name: </span><span class="normal-txt"> {{ node.name }} </span>
+                                        <br /> <span class="normal-txt" style="font-weight:500;"> File Hash: </span><span class="normal-txt"> {{ node.file_hash }} </span>
+                                        <br /> <span class="normal-txt" style="font-weight:500;"> File Merkle Hash: </span><span class="normal-txt"> {{ node.merkle_root }} </span>
+                                        <br /> <span class="normal-txt" style="font-weight:500;"> File Node Hash: </span><span class="normal-txt"> {{ node.node_hash }} </span>
+                                        <br /> <span class="normal-txt" style="font-weight:500;"> Size: </span><span class="normal-txt"> {{ $filters.formatsize(node.size) }}</span>
+                                        <br /> <span class="normal-txt" style="font-weight:500;"> Created At: </span><span class="normal-txt"> {{ $filters.timestamptodate(node.timestamp) }} </span>
                                         
                                         <br /><br />
                                         <router-link style="margin-right: 10px;" :to="'/downloads?hash=' + node.file_hash + '&name=' + node.name">
@@ -516,18 +517,15 @@
         <div id="modal-newfolder" uk-modal="container:#node-container">
             <div class="uk-modal-dialog uk-modal-body">
                 <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
-                <h2 style="font-size: 1.2em; font-weight: bold;" class="uk-modal-title">Create Folder</h2>
+                <h2 class="modal-header">Create Folder</h2>
                 <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
                     <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;"
                         src="/assets/icon.png" />
-                    <br />
-                    <span class="uk-text-lead"> Folder Details </span>
-
                 </div>
                 <div style="padding: 10px; margin-top:10px;">
                     <div style=" width:100%;" class="uk-inline">
                         <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
-                        <input v-model="folder_name" style="width:100%; border-radius: 4px; color:#000;" class="uk-input"
+                        <input v-model="folder_name" style="width:100%; border-radius: 4px;" class="uk-input normal-txt"
                             type="text" placeholder="Name" aria-label="Input">
                     </div>
                     <div v-if="validateFolderNameError != ''" style="margin-top:10px;">
@@ -535,7 +533,7 @@
                                 uk-icon="icon: warning;"></span> {{ validateFolderNameError }} </span>
                     </div>
                     <br /> <br />
-                    <span style="font-weight: bold; color:#000;">
+                    <span class="normal-txt" style="font-weight: 500;">
                         Folder creation fees: {{ subchannelRegistrationFees }} FFG
                     </span>
                 </div>
@@ -563,18 +561,16 @@
         <div id="modal-createsubchannel" uk-modal="container:#node-container">
             <div class="uk-modal-dialog uk-modal-body">
                 <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
-                <h2 style="font-size: 1.2em; font-weight: bold;" class="uk-modal-title">Create Subchannel</h2>
+                <h2 class="modal-header">Create Subchannel</h2>
                 <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
                     <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;"
                         src="/assets/icon.png" />
-                    <br />
-                    <span class="uk-text-lead"> Subchannel Details </span>
-
+          
                 </div>
                 <div style="padding: 10px; margin-top:10px;">
                     <div style=" width:100%;" class="uk-inline">
                         <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
-                        <input v-model="name" style="width:100%; border-radius: 4px; color:#000;" class="uk-input"
+                        <input v-model="name" style="width:100%; border-radius: 4px;" class="normal-txt uk-input"
                             type="text" placeholder="Subchannel Name" aria-label="Input">
                     </div>
                     <div v-if="validateNameError != ''" style="margin-top:10px;">
@@ -585,7 +581,7 @@
                 </div>
                 <div style="padding: 10px; margin-top:5px;">
                     <div style="width:100%;" class="uk-inline">
-                        <textarea v-model="description" class="uk-textarea" rows="5" placeholder="Description"
+                        <textarea v-model="description" class="uk-textarea normal-txt" rows="5" placeholder="Description"
                             aria-label="Textarea"></textarea>
                     </div>
                     <div v-if="validateDescError != ''" style="margin-top:10px;">
@@ -593,7 +589,7 @@
                                 uk-icon="icon: warning;"></span> {{ validateDescError }}</span>
                     </div>
                     <br /> <br />
-                    <span style="font-weight: bold; color:#000;">
+                    <span class="normal-txt" style="font-weight: 500;">
                         Subchannel creation fees: {{ subchannelRegistrationFees }} FFG
                     </span>
                 </div>
@@ -626,7 +622,7 @@
         <div id="modal-upload" uk-modal="container:#node-container; esc-close:false; bg-close:false; ">
             <div style="padding-top:17px; width:60%; padding-bottom: 20px;" class="uk-modal-dialog uk-modal-body">
                 <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
-                <h2 style="font-size: 1.2em; font-weight: bold;" class="uk-modal-title">Upload to Channel</h2>
+                <h2 class="modal-header">Upload to Channel</h2>
                 <div style="padding: 10px; margin-top:10px;">
                     <uploader-component :callback="reload" :parent="node.node_hash" place="channel" />
                 </div>

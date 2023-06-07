@@ -31,6 +31,9 @@ const globalState = reactive({
     storageFees: "",
     jwtAccessToken: "",
     nodeAddress: "",
+    peerID: "",
+    peerCount: 0,
+    storagePublic: false,
     channel_creation_fees_ffg_hex: "",
     remaining_channel_operation_fees_miliffg_hex: "",
     storage_providers: [],
@@ -133,24 +136,24 @@ const asyncFunctionFactory = (item, storageAccessToken, uploadEndpoint) => {
 };
 
 
-const asyncDownloadFileWithProgress = (fileItem) => {
+const asyncDownloadFileWithProgress = (fileItem, reDownload) => {
     return () => {
         /* eslint-disable no-async-promise-executor */
         return new Promise(async (resolve, reject) => {
-            let progressInterval = null;
+           
             try {
-                await callJsonRpc2Endpoint("data_transfer.DownloadFile", [{ contract_hash: fileItem.contract_hash, file_hash: fileItem.file_hash, re_download: false }])
-                progressInterval = setInterval(async () => {
+                await callJsonRpc2Endpoint("data_transfer.DownloadFile", [{ contract_hash: fileItem.contract_hash, file_hash: fileItem.file_hash, re_download: reDownload }])
+                fileItem.progressInterval = setInterval(async () => {
                     let res = await callJsonRpc2Endpoint("data_transfer.DownloadFileProgress", [{ contract_hash: fileItem.contract_hash, file_hash: fileItem.file_hash }])
                     fileItem.progress = res.data.result.bytes_transferred;
                     if(res.data.result.error != "") {
-                        clearInterval(progressInterval)
+                        clearInterval(fileItem.progressInterval)
                         fileItem.error = res.data.result.error;
                         reject(res.data.result.error);
                     }
 
                     if(fileItem.progress >= fileItem.size && res.data.result.file_concatenation) {
-                        clearInterval(progressInterval)
+                        clearInterval(fileItem.progressInterval)
                         
                         let fileName = ""
                         for(let i=0; i< fileItem.contract.file_hoster_response.file_hashes.length;i++) {
@@ -185,7 +188,7 @@ const asyncDownloadFileWithProgress = (fileItem) => {
                     }
                 }, 1000)
             } catch (e) {
-                clearInterval(progressInterval)
+                clearInterval(fileItem.progressInterval)
                 reject(e);
             }
         });
@@ -194,17 +197,17 @@ const asyncDownloadFileWithProgress = (fileItem) => {
 
 
 
-const asyncDownloadFactory = (item) => {
+const asyncDownloadFactory = (item, reDownload) => {
     return () => {
         /* eslint-disable no-async-promise-executor */
         return new Promise(async (resolve, reject) => {
-            console.log("contract ", item)
             try {
                 item.started = true;
                 item.started_at = Date.now(); 
                 for(let i=0; i<item.contracts.length;i++) {
                    for(let j=0; j<item.contracts[i].file_hashes_needed.length;j++) {
                        item.fileDownloads.push({
+                           progressInterval: null,
                            sendSigError: "",
                            sentSig: false,
                            free_download: item.free_download,
@@ -217,13 +220,19 @@ const asyncDownloadFactory = (item) => {
                            error: ""
                        })
 
-                       item.queue.push(asyncDownloadFileWithProgress(item.fileDownloads[item.fileDownloads.length -1]))
+                       item.queue.push(asyncDownloadFileWithProgress(item.fileDownloads[item.fileDownloads.length -1], reDownload))
                    }
                 }
                 
                 item.queue.start()
                 item.queue.addEventListener('end', e => {
                     item.finished_at = Date.now();
+                    let downloadsWithErrors = item.fileDownloads.filter((o) => o.error != "").length
+                    if(downloadsWithErrors > 0) {
+                        item.error = item.fileDownloads[0].error
+                        return
+                    }
+
                     if(!item.free_download) {
                         let tries = 0;
                         let decryptInterval = setInterval(async() => {
@@ -331,11 +340,30 @@ export function AddToDownloads(downloadItem) {
     downloadItem.queue = localQueue;
 
     globalState.downloads.push(downloadItem);
-    fileDownloadsQueue.push(asyncDownloadFactory(globalState.downloads[globalState.downloads.length - 1]))
+    fileDownloadsQueue.push(asyncDownloadFactory(globalState.downloads[globalState.downloads.length - 1], false))
     
     return true;
 }
 
+export function ResumeDownloads(downloadItem) {
+    let localQueue = new queue();
+    localQueue.concurrency = 2;
+    localQueue.autostart = false;
+    downloadItem.queue = localQueue;
+    downloadItem.paused = false;
+    fileDownloadsQueue.push(asyncDownloadFactory(downloadItem, false))
+}
+
+export function RestartDownload(downloadItem) {
+    let localQueue = new queue();
+    localQueue.concurrency = 2;
+    localQueue.autostart = false;
+    downloadItem.queue = localQueue;
+    downloadItem.paused = false;
+    downloadItem.cancelled = false;
+
+    fileDownloadsQueue.push(asyncDownloadFactory(downloadItem, true))
+}
 
 export {
     globalState
@@ -356,7 +384,12 @@ export function SetRpcEndpoint(nodeType) {
     }
 }
 
+export function SetPublicStorage(storagePublic){
+    globalState.storagePublic = storagePublic;
+}
+
 export function SetHowManyItemsToUpload(items) {
+    globalState.uploadingData = true;
     globalState.lastHowManyItemsToUpload = items;
 }
 
@@ -378,11 +411,10 @@ export function UpdateFileUploadToNetworkProgress(files) {
     files.filter((o) => {
         globalState.upload_data.filter((j) => {
             if (o.file_path == j.filepath) {
-
                 // its an async operation, the API might get the full progress however the filemetadata wont
                 // be in leveldb when we read them, so we make sure to read 
                 // until we find metadata
-                if(o.metadata.merkle_root_hash == "") {
+                if(o.metadata.merkle_root_hash == "" && o.error == "") {
                     atLeastOneWithoutMetadata = true;
                 }
 
@@ -408,6 +440,10 @@ export function UpdateFileUploadToNetworkProgress(files) {
 export function CancelItemFromUpload(index) {
     globalState.upload_data[index].canceled = true;
     if (globalState.upload_data[index].cancel) globalState.upload_data[index].cancel.cancel();
+
+    if(globalState.upload_data[index].upload_type == "network"){
+        callJsonRpc2Endpoint("storage.CancelUpload", [{ files: [ { peer_id: globalState.upload_data[index].remote_peer, file_path: globalState.upload_data[index].filepath }] }])
+    }
 }
 
 
@@ -439,9 +475,48 @@ export function SetStorageProviders(val) {
     globalState.storage_providers = val;
 }
 
-export function RemoveItemFromDownloads(index) {
-    globalState.downloads.splice(index, 1);
+export async function RemoveItemFromDownloads(index) {
+    if(globalState.downloads[index].decrypted) {
+        globalState.downloads.splice(index, 1);
+        return
+    }
+
+    if(globalState.downloads[index].cancelled) {
+        globalState.downloads.splice(index, 1);
+    } else {
+        globalState.downloads[index].cancelled = true;
+        for (let i=0;i<globalState.downloads[index].contracts.length;i++) {
+            let contractHash = globalState.downloads[index].contracts[i].contract_hash
+            await callJsonRpc2Endpoint("data_transfer.CancelFileDownloadsByContractHash", [{ contract_hash: contractHash}])
+        }
+    }
+}           
+
+export async function PauseDownload(index) {
+    for (let i=0;i<globalState.downloads[index].contracts.length;i++) {
+        // clear any running interval
+        for(let m = 0; m<globalState.downloads[index].fileDownloads.length;m++) {
+            clearInterval(globalState.downloads[index].fileDownloads[m].progressInterval)
+        }
+
+        globalState.downloads[index].paused = true;
+        let contractHash = globalState.downloads[index].contracts[i].contract_hash
+        for(let j=0; j<globalState.downloads[index].contracts[i].file_hashes_needed.length;j++) {
+            let fileHash = globalState.downloads[index].contracts[i].file_hashes_needed[j]
+            await callJsonRpc2Endpoint("data_transfer.PauseFileDownload", [{ contract_hash: contractHash, file_hash: fileHash }])
+        }
+    }
 }
+
+// export async function Resume(index) {
+//     for (let i=0;i<globalState.downloads[index].contracts.length;i++) {
+//         let contractHash = globalState.downloads[index].contracts[i].contract_hash
+//         for(let j=0; j<globalState.downloads[index].contracts[i].file_hashes_needed.length;j++) {
+//             let fileHash = globalState.downloads[index].contracts[i].file_hashes_needed[j]
+//             await callJsonRpc2Endpoint("data_transfer.PauseFileDownload", [{ contract_hash: contractHash, file_hash: fileHash }])
+//         }
+//     }
+// }
 
 export function SetDownloads(val) {
     if(val && val.length > 0) {
@@ -471,8 +546,13 @@ export function SetBalanceNounce(balance, currentNoounce, nextNounce) {
     globalState.nextNounce = nextNounce;
 }
 
-export function SetNodeAddress(addr) {
+export function SetNodeAddress(addr, peerID) {
     globalState.nodeAddress = addr;
+    globalState.peerID = peerID;
+}
+
+export function SetPeerCount(count) {
+    globalState.peerCount = count;
 }
 
 export function SetJwtAccessToken(accessToken) {

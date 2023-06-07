@@ -1,5 +1,5 @@
 <template>
-<div>
+<div id="wallet-tx-container">
     <div class="area" style="position: relative; background-color: rgb(62, 21, 202); text-align: center; height:260px;">
         <ul class="circles">
             <li></li>
@@ -38,14 +38,14 @@
         <div v-if="loadingTransactions" style="padding:0px 10px; text-align: center;">
             <div style="border:1px solid #d7d7d7; border-radius: 2px;">
                 <div style="margin-top:50px;">
-                    <span style="color:#000; font-size: 25px; font-weight: bold;">Loading your transactions</span>
+                    <span class="app-header2">Loading your transactions</span>
                 </div>
                 <div style="margin-top:18px; padding-bottom:30px;">
                     <div style="margin-top:35px;">
                         <div class="uk-margin">
                             <span class="uk-margin-small-right" uk-spinner="ratio: 3"></span>
                         </div>
-                        <span class="uk-text-small">Please wait while we load your recent transactions</span>
+                        <span class="normal-txt">Please wait while we load your recent transactions</span>
                     </div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                     <div style="padding-left: 10px; padding-right: 10px;">
                         <ul class="uk-list uk-list-divider">
                             <li>
-                                <span style="color:#000; font-size: 20px; font-weight: bold;">Recent transactions:</span>
+                                <span class="normal-txt-header ">Recent transactions:</span>
                             </li>
                             <li :key="tx" v-for="tx in transactions">
                                 <div class="uk-grid-match" uk-grid>
@@ -77,10 +77,10 @@
                                     <div class="uk-width-auto">
                                         <div style="margin-top:10px;">
                                             <span v-if="tx.transaction.loading != null" class="uk-margin-small-right" uk-spinner="ratio: 0.7"></span>
-                                            <span v-if="tx.transaction.data == '0x' || tx.transaction.data == '0x00'" style="border-radius:5px; display:inline-block; width:95px; color: #858484; border:1px solid #a7a7a7; text-align: center;">
+                                            <span class="normal-txt" v-if="tx.transaction.data == '0x' || tx.transaction.data == '0x00'" style="border-radius:5px; display:inline-block; width:95px; border:1px solid #a7a7a7; text-align: center;">
                                                 transaction
                                             </span>
-                                            <span v-else style="border-radius:5px; display:inline-block; width:95px; color: #858484; border:1px solid #a7a7a7; text-align: center;">
+                                            <span class="normal-txt" v-else style="border-radius:5px; display:inline-block; width:95px; border:1px solid #a7a7a7; text-align: center;">
                                                 contract
                                             </span>
                                         </div>
@@ -191,23 +191,21 @@
 
           </div>
 
-
-
-        <div id="modal-send" uk-modal>
+        <div id="modal-send" uk-modal="container:#wallet-tx-container">
             <div class="uk-modal-dialog uk-modal-body">
                 <button class="uk-modal-close-default" type="button" uk-close></button>
-                <h2 class="uk-modal-title">Send FFG</h2>
+                <h2 class="modal-header">Send FFG</h2>
                 <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
                     <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;" src="/assets/icon.png" />
                     <br />
-                    <span class="uk-text-lead"> Current Balance: </span>
+                    <span class="modal-header" style="font-weight: 400;"> Current Balance: </span>
                     <br />
                     <span style="font-weight: bold;" class="uk-text-lead"> {{ balance }} FFG </span>
                 </div>
                 <div style="padding: 10px; margin-top:10px;">
                     <div style=" width:100%;" class="uk-inline">
                         <span style="color: #000;" class="uk-form-icon" uk-icon="icon: world"></span>
-                        <input v-model="toAddress" style="width:100%; border-radius: 4px; color:#000;" class="uk-input" type="text" placeholder="Address" aria-label="Input">
+                        <input v-model="toAddress" style="width:100%; border-radius: 4px;" class="uk-input normal-txt" type="text" placeholder="Address" aria-label="Input">
                     </div>
                     <div v-if="validateAddressError != ''" style="margin-top:10px;">
                         <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;" uk-icon="icon: warning;"></span> {{ validateAddressError }}</span>
@@ -216,8 +214,8 @@
                 </div>
                 <div style="padding: 10px; margin-top:5px;">
                     <div style="width:100%;" class="uk-inline">
-                        <span style="color: #000; font-size: 0.9em;" class="uk-form-icon">FFG</span>
-                        <input v-model="toAmount" style="width:100%; border-radius: 4px; color:#000;" class="uk-input" type="text" placeholder="Enter the amount e.g 0.1" aria-label="Input">
+                        <span style="font-weight:600; font-size: 0.9em;" class="uk-form-icon normal-txt">FFG</span>
+                        <input v-model="toAmount" style="width:100%; border-radius: 4px;" class="uk-input normal-txt" type="text" placeholder="Enter the amount e.g 0.1" aria-label="Input">
                     </div>
                     <div v-if="validateAmountError != ''" style="margin-top:10px;">
                         <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;" uk-icon="icon: warning;"></span> {{ validateAmountError }}</span>
@@ -225,14 +223,14 @@
                 </div>
                 <div style="padding: 10px; margin-top:5px;">
                     <div style="width:100%;" class="uk-inline">
-                        <span style="color: #000; font-size: 0.9em;" class="uk-form-icon">FFG</span>
-                        <input v-model="transactionFees" style="width:100%; border-radius: 4px; color:#000;" class="uk-input" type="text" placeholder="Transaction fees in FFG" aria-label="Input">
+                        <span style="font-weight:600; font-size: 0.9em;" class="uk-form-icon normal-txt">FFG</span>
+                        <input v-model="transactionFees" style="width:100%; border-radius: 4px;" class="uk-input normal-txt" type="text" placeholder="Transaction fees in FFG" aria-label="Input">
                     </div>
                     <div v-if="validateTransactionFeesError != ''" style="margin-top:10px;">
                         <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;" uk-icon="icon: warning;"></span> {{ validateTransactionFeesError }}</span>
                     </div>
-                    <div style="color:#000; margin-top:10px;">
-                        <span>We recommend utilizing the default transaction fees of <b>0.001 FFG</b></span>
+                    <div style="margin-top:10px;">
+                        <span class="normal-txt">We recommend utilizing the default transaction fees of <b>0.001 FFG</b></span>
                     </div>
                 </div>
                 <div style="padding: 10px; margin-top:5px;">
@@ -250,19 +248,19 @@
             </div>
         </div>
 
-        <div id="modal-receive" uk-modal>
+        <div id="modal-receive" uk-modal="container:#wallet-tx-container">
             <div class="uk-modal-dialog uk-modal-body">
                 <button class="uk-modal-close-default" type="button" uk-close></button>
-                <h2 class="uk-modal-title">Receive FFG</h2>
+                <h2 class="modal-header">Receive FFG</h2>
                 <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
                     <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;" src="/assets/icon.png" />
                     <br />
-                    <span class="uk-text-lead"> Wallet Address </span>
+                    <span class="modal-header" style="font-weight: 400;"> Wallet Address: </span>
                 </div>
                 <div style="padding: 10px; margin-top:10px;">
                     <div style="width:100%;" class="uk-inline">
                         <span class="uk-form-icon" uk-icon="icon: world"></span>
-                        <input v-model="nodeAddress" style="width:100%; border-radius: 4px;" class="uk-input" type="text" placeholder="Your Address" aria-label="Input">
+                        <input v-model="nodeAddress" style="width:100%; border-radius: 4px;" class="uk-input normal-txt" type="text" placeholder="Your Address" aria-label="Input">
                     </div>
                 </div>
                 <div style="padding: 10px; margin-top:10px;">
@@ -279,11 +277,11 @@
             </div>
         </div>
 
-        <div id="modal-txinfo" uk-modal>
+        <div id="modal-txinfo" uk-modal="container:#wallet-tx-container">
             <div class="uk-modal-dialog uk-modal-body">
                 <button class="uk-modal-close-default" type="button" uk-close></button>
-                <h2 class="uk-modal-title">Transaction Info</h2>
-                <div style="color:#000; word-wrap: break-word;">
+                <h2 class="modal-header">Transaction Info</h2>
+                <div class="normal-txt" style="word-wrap: break-word;">
                     <div v-if="tmpTXInfo != null" style="padding:5px;">
                         <span style="color: #000; font-weight: bold;">Block: </span> {{tmpTXInfo.block_number}}
                         <br /> <br />
@@ -306,10 +304,10 @@
             </div>
         </div>
 
-        <div class="uk-flex-top" id="modal-confirmation" uk-modal>
+        <div class="uk-flex-top" id="modal-confirmation" uk-modal="container:#wallet-tx-container">
             <div class="uk-modal-dialog uk-modal-body  uk-margin-auto-vertical">
-                <h3 style="font-size: 21px;" class="uk-modal-title uk-text-default">Transaction was sent</h3>
-                <p style="color:#000;">
+                <h3 class="modal-header">Transaction was sent</h3>
+                <p class="normal-txt">
                     Your transaction was successfully sent, please wait for the confirmation.
                 </p>
                 <p class="uk-text-right">

@@ -8,14 +8,24 @@ import path from 'path';
 import fs from "fs";
 import { Units } from "./unit.js"
 import BigNumber from 'bignumber.js';
+const contextMenu = require('electron-context-menu');
+
+contextMenu({
+	showSaveImageAs: false,
+  
+});
 
 const cryptoLib = require("crypto");
 const isDevelopment = process.env.NODE_ENV !== 'production'
 app.commandLine.appendSwitch('disable-color-correct-rendering');
 app.commandLine.appendSwitch('force-color-profile', 'srgb');
 
+var ffgBinaryName = "filefilego"
+if(process.platform === 'win32') {
+  ffgBinaryName = "filefilego.exe"
+}
 
-let binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
+let binaryPath = path.resolve(__dirname, "../", "bin", ffgBinaryName);
 let args = ["address", "data_dir"]
 let homeDir = ""
 spawnSync(binaryPath, args).then(result => {
@@ -83,7 +93,7 @@ setInterval(() => {
 var pidFFG = null;
 function spawnBinaryFile(binaryPath, argsArray) {
   const process = spawn(binaryPath, argsArray, {
-    detached: true,
+    // detached: true,
     // stdio: 'ignore'
   });
 
@@ -105,7 +115,7 @@ function spawnBinaryFile(binaryPath, argsArray) {
 
   pidFFG = process.pid;
 
-  process.unref();
+  // process.unref();
 
   return process;
 }
@@ -231,7 +241,7 @@ app.on('ready', async () => {
 
 ipcMain.on("run-ffg", (evt, arg) => {
   let args = [];
-  const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
+  const binaryPath = path.resolve(__dirname, "../", "bin", ffgBinaryName);
   const geolitePath = path.resolve(__dirname, "../", "bin", "GeoLite2-Country.mmdb");
   try {
     const settings = readJSONFile(path.join(homeDir, "settings.json"))
@@ -264,6 +274,7 @@ ipcMain.on("run-ffg", (evt, arg) => {
     // args.push(`--bootstrap_nodes=/dns/validator.local/tcp/10209/p2p/16Uiu2HAmVXbhxA1tiA9PRZJWwSk5jdMfWXbfeGWaubVeT7MZu8ie`)
     args.push(`--bootstrap_nodes=/ip4/18.159.124.250/tcp/10209/p2p/16Uiu2HAmVXbhxA1tiA9PRZJWwSk5jdMfWXbfeGWaubVeT7MZu8ie`)
   } catch (e) {
+    console.log(e)
     return
   }
   runBinary(binaryPath, args)
@@ -278,18 +289,16 @@ ipcMain.on("close-me", (evt, arg) => {
 });
 
 ipcMain.on("select-dir", async (evt, arg) => {
+  if(process.platform === 'linux') {
+    win.hide();
+  }
   const res = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
     title: "Select Directory",
     properties: ['openDirectory']
   })
-  evt.returnValue = res;
-});
-
-ipcMain.on("select-files", async (evt, arg) => {
-  const res = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
-    title: "Select Files",
-    properties: ['openFile', 'multiSelections']
-  })
+  if(process.platform === 'linux') {
+    win.show();
+  }
   evt.returnValue = res;
 });
 
@@ -314,9 +323,9 @@ ipcMain.on("sha256", (evt, arg) => {
 });
 
 ipcMain.on("minimize", (evt, arg) => {
-  // win.minimize();
-  evt.preventDefault()
-  win.hide();
+  win.minimize();
+  // evt.preventDefault()
+  // win.hide();
 });
 
 ipcMain.on("ffg-output", (evt, arg) => {
@@ -359,7 +368,7 @@ function copyFileSync(sourcePath, destinationPath, destinationFileName) {
 ipcMain.on("check-key", async (evt, arg) => {
   try {
     if (fileExists(arg.path)) {
-      const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
+      const binaryPath = path.resolve(__dirname, "../", "bin", ffgBinaryName);
       const args = ["address", "info", arg.path, arg.password]
       let res = ""
       try {
@@ -390,7 +399,7 @@ ipcMain.on("check-key", async (evt, arg) => {
 ipcMain.on("create-node-identity", async (evt, arg) => {
   try {
     if (!fileExists(path.join(homeDir, "keystore", "node_identity.json"))) {
-      const binaryPath = path.resolve(__dirname, "../", "bin", "filefilego");
+      const binaryPath = path.resolve(__dirname, "../", "bin", ffgBinaryName);
       const args = ["address", "create_node_key", arg.password]
       await spawnSync(binaryPath, args)
       evt.returnValue = { error: "" }

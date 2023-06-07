@@ -17,11 +17,11 @@
           <div>
             <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;" src="/assets/icon.png" />
           </div>
-          <div style="margin-top:2px;">
-              <span style="color: #fff; font-size: 30px;"> FILEFILEGO</span>
+          <div style="margin-top:13px;">
+              <span class="app-header" style="color: #fff;"> FILEFILEGO</span>
           </div>
-          <div style="margin-top:2px; padding-bottom: 10px;">
-              <span style="color: #fff; font-size: 25px; font-weight: bold;">Decentralized Data Sharing Network</span>
+          <div style="margin-top:13px; padding-bottom: 13px;">
+              <span class="app-header" style="color: #fff;">Decentralized Data Sharing Network</span>
           </div> 
       </div>
   
@@ -104,10 +104,10 @@
           </div>
 
           <div v-if="keypath == ''">
-            <span class="uk-text-lead uk-text-bold">Create Wallet Key & Address</span>
+            <span class="app-header2">Create Wallet Key & Address</span>
             <br />
             <div style=" padding:20px;">
-              <span class="uk-text-default" style="color:#000;">
+              <span class="normal-txt">
                 We will create a secure wallet key and address for you. You have to secure this wallet key with your password:
               </span>
   
@@ -138,13 +138,13 @@
 
           <hr style="margin:0px;" class="uk-divider-icon" />
           <div style="padding:20px;">
-            <span class="uk-text-lead uk-text-bold">Import Wallet Key</span>
+            <span class="app-header2">Import Wallet Key</span>
             <div style="margin-top:10px;">
-              <span class="uk-text-default" style="color:#000;">
+              <span class="normal-txt">
                 If you already have a wallet key, please import it here:
               </span>
             </div>
-            <button @click="openUnlockModal" class="uk-button ffg-button" style="margin-top:10px; width:220px; height:45px; ">
+            <button @click="openUnlockModal" class="uk-button ffg-button" style="margin-top:25px; width:220px; height:45px; ">
               Import Key
               <span class="uk-icon" uk-icon="icon: lock"></span>
             </button>
@@ -155,7 +155,7 @@
               <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
             </button>
             <div style="margin-top:20px;">
-                <span class="uk-text-default" style="color:#c94036;">
+                <span class="normal-txt" style="color: rgb(220 38 38);">
                     <span class="uk-icon" uk-icon="icon: warning"></span> Please don't forget your password and backup your wallet key file! The data of this application could be wiped out which would make it impossible to recover your coins.
                 </span>
             </div>

@@ -17,11 +17,11 @@
           <div>
             <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;" src="/assets/icon.png" />
           </div>
-          <div style="margin-top:2px;">
-              <span style="color: #fff; font-size: 30px;"> FILEFILEGO</span>
+          <div style="margin-top:13px;">
+              <span class="app-header" style="color: #fff;"> FILEFILEGO</span>
           </div>
-          <div style="margin-top:2px; padding-bottom: 10px;">
-              <span style="color: #fff; font-size: 25px; font-weight: bold;">Decentralized Data Sharing Network</span>
+          <div style="margin-top:13px; padding-bottom: 13px;">
+              <span class="app-header" style="color: #fff;">Decentralized Data Sharing Network</span>
           </div> 
   
         <!-- Hello world
@@ -113,18 +113,18 @@
                 </g>
                 </svg>
           </div>
-          <span class="uk-text-lead uk-text-bold">Choose Node Type</span>
+          <span class="app-header2">Choose Node Type</span>
           <br />
           <div style="padding:20px;">
             <div class="uk-form-controls">
-                <label style="color:#000;" class="uk-text-bold"><input v-model="node_type" class="uk-radio" value="superlight" type="radio" name="radio1"> Super light node (Recommended for beginners)</label><br>
-                <span class="uk-text-default" style="color:#000;">
+                <label style="color:#000; font-weight: 500;"><input v-model="node_type" class="uk-radio" value="superlight" type="radio" name="radio1"> Super light node (Recommended for beginners)</label><br>
+                <span class="normal-txt">
                     A super light node is fast and doesn't require you to download the blockchain. <br />
                     Choose this option if you want to use the wallet and download data.
                 </span>
                 <div style="margin-top:20px;">
-                    <label style="color:#000;" class="uk-text-bold"><input v-model="node_type" class="uk-radio" value="storage" type="radio" name="radio1"> Storage full node</label><br>
-                    <span class="uk-text-default" style="color:#000;">
+                    <label style="color:#000; font-weight: 500;" class="uk-text-bold"><input v-model="node_type" class="uk-radio" value="storage" type="radio" name="radio1"> Storage full node</label><br>
+                    <span class="normal-txt">
                         A storage node is a full node which allows you and others upload data to this computer. <br />
                         Choose this option if you want to use the wallet, download data <br />
                         and provide storage to the network.

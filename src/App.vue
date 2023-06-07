@@ -21,7 +21,6 @@ export default {
             
             interval: null,
             numFailedCalls: 0,
-            failedAttempsError: ""
         }
     },
     unmounted() {
@@ -42,7 +41,7 @@ export default {
 
                     if (this.numFailedCalls > 50) {
                         clearInterval(this.interval);
-                        this.failedAttempsError = "failed to connect to local node retried 50 times";
+                        alert("failed to connect to local node retried 50 times");
                         return;
                     }
 
@@ -52,6 +51,7 @@ export default {
         }
     },
     mounted() {
+
         let nodeKeyExists = ipcRenderer.sendSync("node-key-exists", {})
         if (nodeKeyExists) {
             this.$router.replace("/unlock")
@@ -90,8 +90,14 @@ export default {
 </script>
 
 <style>
+html { font-family: "Inter", "system-ui"; }
+
+@supports (font-variation-settings: normal) {
+  html { font-family: "Inter var", "system-ui"; }
+}
+
 #app {
-    font-family: Avenir, Helvetica, Arial, sans-serif;
+    /* font-family: Avenir, Helvetica, Arial, sans-serif; */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -104,11 +110,30 @@ body {
     margin: 0;
 }
 
+body :not(input) {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none;
+}
+
 .ffg-button {
     background-color: #3e15ca;
     color: white;
     border-radius: 3px;
     text-transform: none;
+    font-weight: 600;
+}
+
+.ffg-button:disabled{
+    background-color: transparent;
+    color: #757575;
+    border:1px solid #e5e5e5;
+}
+
+.ffg-button:disabled:hover{
+    background-color: transparent;
+    color: #757575;
 }
 
 .ffg-button:hover {
@@ -238,4 +263,52 @@ body {
     }
 
 }
+
+
+.normal-txt {
+    color: rgb(71 85 105);
+    line-height: 1.75rem;
+    font-size: 1rem;
+}
+
+.normal-txt-header {
+    color: rgb(15 23 42);
+    line-height: 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.modal-header {
+    color: rgb(17 24 39);
+    line-height: 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.modal-txt {
+    color: rgb(107 114 128);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.app-header {
+
+    color: rgb(17 24 39);
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-header2 {
+    color: rgb(17 24 39);
+    letter-spacing: -0.025em;
+    line-height: 2.25rem;
+    font-weight: 700;
+    font-size: 1.5rem;
+
+}
+
 </style>

@@ -66,9 +66,9 @@
 
                                         <span v-if="d.paused" style="font-size: 0.9em; font-weight: bold; margin-left:10px;"> <span uk-icon="icon:warning; ratio:0.8;"></span> Download paused </span>
 
-                                        <span v-if="$filters.formatsize(getTotalSizeOfDownload(d).progress) < $filters.formatsize(getTotalSizeOfDownload(d).total)" style="font-size: 0.9em; font-weight: bold;"> Remaining: {{ getTotalSizeOfDownload(d).remaining  }}</span> 
+                                        <span v-if="getTotalSizeOfDownload(d).progress < getTotalSizeOfDownload(d).total" style="font-size: 0.9em; font-weight: bold;"> Remaining: {{ getTotalSizeOfDownload(d).remaining  }}</span> 
                                         <span>
-                                            <span v-if="!d.paused && $filters.formatsize(getTotalSizeOfDownload(d).progress) >= $filters.formatsize(getTotalSizeOfDownload(d).total) && !d.decrypted" style="margin-left:8px; font-weight: bold;" class="uk-margin-small-right" uk-spinner="ratio: 0.7"> decrypting data </span>
+                                            <span v-if="!d.paused && getTotalSizeOfDownload(d).progress >= getTotalSizeOfDownload(d).total && !d.decrypted" style="margin-left:8px; font-weight: bold;" class="uk-margin-small-right" uk-spinner="ratio: 0.7"> decrypting data </span>
                                             <span v-if="d.decrypted" style="padding:1px; margin-left:5px; color: #5cb85c; border: 1px solid #5cb85c; border-radius: 50%;" uk-icon="icon:check;ratio:0.9"></span>
                                         </span>
                                     </div>

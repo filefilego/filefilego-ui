@@ -28,6 +28,16 @@ if(process.platform === 'win32') {
 let binaryPath = path.resolve(__dirname, "../", "bin", ffgBinaryName);
 let args = ["address", "data_dir"]
 let homeDir = ""
+
+if(process.platform != 'win32') {
+  try {
+    fs.chmodSync(binaryPath, 0o755);
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+
 spawnSync(binaryPath, args).then(result => {
     let h = result.split("Default Data Directory::").filter((o) => o != "")
     homeDir = h[0];

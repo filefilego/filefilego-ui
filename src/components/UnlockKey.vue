@@ -60,7 +60,7 @@
           </div>
           <div v-if="!loading && !unlockingWallet" style="margin-top:35px;">
               <button :disabled="nodeAddress==''" @click="unlock" class="uk-button ffg-button" style="width:250px; height:50px; ">
-                Unlock
+                Open Application
                 <span class="uk-icon" uk-icon="icon: unlock"></span>
               </button>
           </div>

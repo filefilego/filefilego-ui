@@ -152,6 +152,11 @@ const asyncDownloadFileWithProgress = (fileItem, reDownload) => {
                         reject(res.data.result.error);
                     }
 
+                    if(res.data.result.paused) {
+                        clearInterval(fileItem.progressInterval)
+                        reject("paused");
+                    }
+
                     if(fileItem.progress >= fileItem.size && res.data.result.file_concatenation) {
                         clearInterval(fileItem.progressInterval)
                         
@@ -226,10 +231,20 @@ const asyncDownloadFactory = (item, reDownload) => {
                 
                 item.queue.start()
                 item.queue.addEventListener('end', e => {
+                    try {
+                        if(e.detail != undefined && e.detail.error == "paused") {
+                            reject("paused");
+                            return;
+                        }
+                    } catch (e) {
+                        console.log(e)
+                    }
+                   
                     item.finished_at = Date.now();
                     let downloadsWithErrors = item.fileDownloads.filter((o) => o.error != "").length
                     if(downloadsWithErrors > 0) {
                         item.error = item.fileDownloads[0].error
+                        reject(item.error);
                         return
                     }
 
@@ -239,6 +254,7 @@ const asyncDownloadFactory = (item, reDownload) => {
                             if(tries > 50) {
                                 clearInterval(decryptInterval);
                                 item.decryptionError = "Timeout asking verifier for decryption key";
+                                reject(item.decryptionError);
                             }
                             tries++
                             try {
@@ -272,8 +288,8 @@ const asyncDownloadFactory = (item, reDownload) => {
                     } else {
                         item.decrypted = true;
                         ipcRenderer.sendSync("remove-folder", path.join(globalState.downloadsPath, item.contracts[0].contract_hash))
+                        resolve("done");
                     }
-
                     resolve(e);
                 })
             } catch (e) {
@@ -495,9 +511,9 @@ export async function RemoveItemFromDownloads(index) {
 export async function PauseDownload(index) {
     for (let i=0;i<globalState.downloads[index].contracts.length;i++) {
         // clear any running interval
-        for(let m = 0; m<globalState.downloads[index].fileDownloads.length;m++) {
-            clearInterval(globalState.downloads[index].fileDownloads[m].progressInterval)
-        }
+        // for(let m = 0; m<globalState.downloads[index].fileDownloads.length;m++) {
+        //     clearInterval(globalState.downloads[index].fileDownloads[m].progressInterval)
+        // }
 
         globalState.downloads[index].paused = true;
         let contractHash = globalState.downloads[index].contracts[i].contract_hash

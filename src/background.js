@@ -207,6 +207,22 @@ async function createWindow() {
   }
 }
 
+const additionalData = {}
+const gotTheLock = app.requestSingleInstanceLock(additionalData)
+
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory, additionalData) => {
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
+    }
+  })
+
+
+}
+
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
   // On macOS it is common for applications and their menu bar

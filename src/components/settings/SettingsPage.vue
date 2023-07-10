@@ -109,6 +109,27 @@
                
               </div>
             </div>
+
+            <div class="uk-margin">
+              <label class="uk-form-label normal-txt" style="font-size:0.9em; font-weight: 500;" for="form-horizontal-text">
+                Wallet Key Location
+              </label>
+              <div class="uk-form-controls">
+               
+                <button @click="openFolder()" class="uk-button ffg-button" style="width:150px; height:40px; ">
+                  Open
+                  <span class="uk-icon" uk-icon="icon: folder"></span>
+                </button>
+                <div>
+                  <span class="normal-txt" style="font-size: 0.9em; font-weight: 500;">
+                    Click open and backup your "node_identity.json" file
+                  </span>
+                  
+                </div>
+              </div>
+            </div>
+
+
           </div>
         </div>
 
@@ -221,6 +242,10 @@ export default {
       }
   },
   methods: {
+    openFolder() {
+      let filePath = ipcRenderer.sendSync("get-datadir", {})
+      ipcRenderer.sendSync("open-folder", filePath);
+    },
     chooseDir(selectType) {
         let selected = ipcRenderer.sendSync("select-dir", {})
         if(selected.filePaths && selected.filePaths.length > 0) {

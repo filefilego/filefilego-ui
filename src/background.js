@@ -310,6 +310,10 @@ ipcMain.on("ffg-pid", async (evt, arg) => {
   evt.returnValue = pidFFG;
 });
 
+ipcMain.on("get-datadir", async (evt, arg) => {
+  evt.returnValue = homeDir + path.sep + "keystore";
+});
+
 ipcMain.on("close-me", (evt, arg) => {
   app.quit();
 });

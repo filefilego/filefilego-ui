@@ -282,6 +282,19 @@ export default {
                 alert(e.message)
             }
         },
+        async findProvidersFromVerifiers() {
+            try {
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "storage.FindProvidersFromPeers",
+                    params: [{ }],
+                    id: 1
+                };
+                await axios.post(localNodeEndpoint, data);
+            } catch (e) {
+                console.log(e.message)
+            }
+        },
         async startSearchProviders() {
             if(this.storageProvidersInterval != null) {
                 clearInterval(this.storageProvidersInterval);
@@ -289,7 +302,8 @@ export default {
             }
             this.storageProvidersInterval = null;
             this.storageProvidersIntervalCount = 1;
-            await this.findProviders();
+            await this.findProvidersFromVerifiers();
+            // await this.findProviders();
 
             this.storageProvidersInterval = setInterval(async () => {
                 if (this.storageProvidersIntervalCount > 11) {

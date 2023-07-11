@@ -235,7 +235,7 @@ export default {
                 const data = {
                     jsonrpc: '2.0',
                     method: "storage.TestSpeedWithRemotePeer",
-                    params: [{ peer_id: p.storage_provider_peer_addr, file_size: 1024 * 1024 * 10 }],
+                    params: [{ peer_id: p.storage_provider_peer_addr, file_size: 1024 * 1024 * 5 }],
                     id: 1
                 };
 
@@ -282,6 +282,19 @@ export default {
                 alert(e.message)
             }
         },
+        async findProvidersFromVerifiers() {
+            try {
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "storage.FindProvidersFromPeers",
+                    params: [{ }],
+                    id: 1
+                };
+                await axios.post(localNodeEndpoint, data);
+            } catch (e) {
+                console.log(e.message)
+            }
+        },
         async startSearchProviders() {
             if(this.storageProvidersInterval != null) {
                 clearInterval(this.storageProvidersInterval);
@@ -290,6 +303,7 @@ export default {
             this.storageProvidersInterval = null;
             this.storageProvidersIntervalCount = 1;
             await this.findProviders();
+            await this.findProvidersFromVerifiers();
 
             this.storageProvidersInterval = setInterval(async () => {
                 if (this.storageProvidersIntervalCount > 11) {
@@ -298,6 +312,7 @@ export default {
                     return;
                 }
                 if (this.loadingDiscoveredProviders) return;
+
                 await this.populateResultsOfProviders()
                 this.storageProvidersIntervalCount++;
             }, 1000)

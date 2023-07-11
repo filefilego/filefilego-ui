@@ -303,6 +303,7 @@ export default {
             this.storageProvidersInterval = null;
             this.storageProvidersIntervalCount = 1;
             await this.findProviders();
+            await this.findProvidersFromVerifiers();
 
             this.storageProvidersInterval = setInterval(async () => {
                 if (this.storageProvidersIntervalCount > 11) {
@@ -311,10 +312,8 @@ export default {
                     return;
                 }
                 if (this.loadingDiscoveredProviders) return;
+
                 await this.populateResultsOfProviders()
-                if(this.providers.length == 0) {
-                    await this.findProvidersFromVerifiers();
-                }
                 this.storageProvidersIntervalCount++;
             }, 1000)
 

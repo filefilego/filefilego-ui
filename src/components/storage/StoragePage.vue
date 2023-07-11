@@ -235,7 +235,7 @@ export default {
                 const data = {
                     jsonrpc: '2.0',
                     method: "storage.TestSpeedWithRemotePeer",
-                    params: [{ peer_id: p.storage_provider_peer_addr, file_size: 1024 * 1024 * 10 }],
+                    params: [{ peer_id: p.storage_provider_peer_addr, file_size: 1024 * 1024 * 5 }],
                     id: 1
                 };
 
@@ -302,8 +302,7 @@ export default {
             }
             this.storageProvidersInterval = null;
             this.storageProvidersIntervalCount = 1;
-            await this.findProvidersFromVerifiers();
-            // await this.findProviders();
+            await this.findProviders();
 
             this.storageProvidersInterval = setInterval(async () => {
                 if (this.storageProvidersIntervalCount > 11) {
@@ -313,6 +312,9 @@ export default {
                 }
                 if (this.loadingDiscoveredProviders) return;
                 await this.populateResultsOfProviders()
+                if(this.providers.length == 0) {
+                    await this.findProvidersFromVerifiers();
+                }
                 this.storageProvidersIntervalCount++;
             }, 1000)
 

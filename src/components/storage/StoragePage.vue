@@ -66,7 +66,16 @@
                                     N/A</span>
                                     <span style="margin-left:3px;" v-else :class="getCountry(p)" class="fi"></span>
                                 </td>
-                                <td class="normal-txt">
+                                <td style="text-align: center;" class="normal-txt">
+                                         <!-- {{  speedTestError(p)  }} -->
+                                         <div v-if="speedTestError(p) != ''" class="uk-inline">
+                                            <span uk-icon="icon: warning" style="color:red; cursor: pointer;"> </span>
+                                            <div style="color: #c50000; font-size: 0.9em;" uk-dropdown="delay-hide:1;">
+                                                {{speedTestError(p)}}
+                                            </div>
+                                        </div>
+
+                                   
                                     <span v-if="getSpeedTestLoading(p)" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
                                     <div v-else>
                                         <button v-if="getSpeedTest(p) == ''" @click="perfromSpeedTest(p)" class="uk-button ffg-button"
@@ -118,6 +127,7 @@ export default {
     components: {},
     data() {
         return {
+            speedTestErrors: {},
             loadingSpeedTest: {},
             speedTest: {},
             storageProvidersInterval: null,
@@ -145,6 +155,20 @@ export default {
         }
     },
     methods: {
+        speedTestError(p) {
+            if(this.speedTestErrors[p.storage_provider_peer_addr] !== undefined) {
+                if(this.speedTestErrors[p.storage_provider_peer_addr].includes("no addresses")) {
+                    return "Storage provider seems to be offline";
+                }
+
+                if(this.speedTestErrors[p.storage_provider_peer_addr].includes("timeout") || this.speedTestErrors[p.storage_provider_peer_addr].includes("backoff")) {
+                    return "Storage provider connection timeout";
+                }
+
+                return this.speedTestErrors[p.storage_provider_peer_addr]
+            }
+            return "";
+        },
         isSelected(p) {
             const sp = ref(globalState.storage_providers);
             if (sp.value != undefined && sp.value.length > 0) {
@@ -230,6 +254,7 @@ export default {
         },
         async perfromSpeedTest(p) {
             try {
+                delete this.speedTestErrors[p.storage_provider_peer_addr];
                 this.loadingSpeedTest[p.storage_provider_peer_addr] = { loading: true }
                 this.loadingDiscoveredProviders = true;
                 const data = {
@@ -242,7 +267,7 @@ export default {
                 let response = await axios.post(localNodeEndpoint, data);
                 this.speedTest[p.storage_provider_peer_addr] = { download_throughput_mb: response.data.result.download_throughput_mb }
             } catch (e) {
-                console.log(e.message)
+                this.speedTestErrors[p.storage_provider_peer_addr] = e.response.data.error
             } finally {
                 this.loadingDiscoveredProviders = false;
                 this.loadingSpeedTest[p.storage_provider_peer_addr] = { loading: false }

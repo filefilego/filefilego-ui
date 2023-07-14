@@ -67,7 +67,6 @@
                                     <span style="margin-left:3px;" v-else :class="getCountry(p)" class="fi"></span>
                                 </td>
                                 <td style="text-align: center;" class="normal-txt">
-                                         <!-- {{  speedTestError(p)  }} -->
                                          <div v-if="speedTestError(p) != ''" class="uk-inline">
                                             <span uk-icon="icon: warning" style="color:red; cursor: pointer;"> </span>
                                             <div style="color: #c50000; font-size: 0.9em;" uk-dropdown="delay-hide:1;">

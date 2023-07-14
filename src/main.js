@@ -167,7 +167,26 @@ const router = createRouter({
 const app = createApp(App)
 app.config.globalProperties.$filters = {
     firstletter(val) {
-        return val.charAt(0).toUpperCase();
+        const trimmedString = val.trim();
+        const regex = /^[A-Za-z]/; // Regular expression to match the first alphabetical character
+        
+        const match = trimmedString.match(regex);
+        
+        if (match) {
+          const firstLetter = match[0];
+          return firstLetter.toUpperCase();
+        }
+      
+        // If no match found using the previous regular expression,
+        // fallback to extracting the first letter using a workaround
+        const letterMatch = trimmedString.match(/\p{L}/u);
+        
+        if (letterMatch) {
+          const firstLetter = letterMatch[0];
+          return firstLetter.toUpperCase();
+        }
+        
+        return "*";
     },
     timestamptodate(val) {
         return new Date(val * 1000).toLocaleString();

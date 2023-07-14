@@ -149,10 +149,11 @@
           </div>
         </div>
 
+        <div>
+          <span class="normal-txt" style="font-size:0.9em; font-weight: 500; color:#000;">FileFileGo UI v{{ version }}</span>
+          
+        </div>
       </div>
-
-
-
     </div>
   </div>
 </template>
@@ -184,6 +185,7 @@ export default {
       storageAccessToken: "",
       storageFeesPerByte: "",
       storageFeesIsValid: true,
+      version: "",
     }
   },
   unmounted() {
@@ -200,6 +202,8 @@ export default {
     this.storageAccessToken = globalState.storageAccessToken;
     this.storageFeesPerByte = globalState.storageFees || "0.0000000001";
 
+    this.version = ipcRenderer.sendSync("app-version", {})
+        
     try {
       const data = {
         jsonrpc: '2.0',

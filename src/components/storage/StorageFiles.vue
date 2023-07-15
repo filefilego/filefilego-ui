@@ -52,6 +52,7 @@
                                 <th style="text-transform:none;"><span style="color:#000;"> File Hash </span></th>
                                 <!-- <th style="text-transform:none;"><span style="color:#000;"> Merkle Hash </span></th> -->
                                 <th style="width:130px; text-transform:none;"> <span style="color:#000;"> Size </span></th>
+                                <th style="width:60px; text-transform:none;"> <span uk-icon="cog" style="color:#000;">  </span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -66,14 +67,13 @@
                                 <td class="normal-txt uk-text-truncate">
                                     <span style="cursor: pointer;" @click="copyClipboard(f.hash)" uk-tooltip="Copy" uk-icon="icon:copy; ratio:0.9;"></span> {{ f.hash }}
                                 </td>
-                                <!-- <td class="uk-text-truncate">
-                                    <span>
-                                        {{ f.merkle_root_hash }}
-                                    </span>
-                                </td> -->
                                 <td class="normal-txt">
                                     <span>
                                         {{  $filters.formatsize(f.size)  }}
+                                    </span>
+                                </td>
+                                 <td class="uk-text-truncate">
+                                    <span @click="showFileDeleteModal(f.key)" uk-tooltip="Delete item locally" style="color:red; cursor: pointer;" uk-icon="close"> 
                                     </span>
                                 </td>
                             </tr>
@@ -113,6 +113,29 @@
             </div>
         </div>
 
+        <div id="modal-deletefile" uk-modal="container: #files-container; esc-close:false; bg-close:false;">
+            <div style="padding-top: 17px; width: 60%; padding-bottom: 20px;" class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+                <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 class="modal-header">Delete File</h2>
+             
+                <div class="normal-txt" style="margin-top:15px;">
+                    Are you sure you want to delete this file?
+                </div>
+                <div style="padding:0px 10px; margin-top:10px;">
+                    <div v-if="fileDeleteError != ''" style="margin-top:10px; text-align: center;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                uk-icon="icon: warning;"></span> {{ fileDeleteError }} </span>
+                    </div>
+                </div>
+                <div style="padding:8px 0px;" class="uk-modal-footer uk-text-right">                    
+                    <button @click="deleteFile(tmpFileKey)" class="uk-button ffg-button"
+                            style="text-transform: none; width:150px; height: 40px;">
+                            Delete
+                            <span class="uk-icon" uk-icon="icon: close"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
     </div>
 </template>
@@ -134,6 +157,8 @@ export default {
     },
     data() {
         return {
+            tmpFileKey: "",
+            fileDeleteError: "",
             loadingFiles: false,
             pagination: {},
             nodeAddress: "",
@@ -234,11 +259,42 @@ export default {
                 paginator.paginate({ rows: this.files, count: response.data.result.total });
                 let pl = paginator.payload();
                 this.pagination = { ...pl };
-
+                
             } catch (e) {
                 alert(e.message)
             } finally {
                 this.loadingFiles = false;
+            }
+        },
+        showFileDeleteModal(key) {
+            this.tmpFileKey = key;
+            const myModal = document.getElementById('modal-deletefile');
+            const modal = window.UIkit.modal(myModal);
+            modal.show();
+        },
+        hideFileDeleteModal(key) {
+            this.tmpFileKey = key;
+            const myModal = document.getElementById('modal-deletefile');
+            const modal = window.UIkit.modal(myModal);
+            modal.hide();
+        },
+        async deleteFile(fileKey) {
+            try {
+                this.fileDeleteError = "";
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "storage.DeleteUploadedFile",
+                    params: [{ key: fileKey, access_token:  this.globalState.jwtAccessToken }],
+                    id: 1
+                };
+
+                let response = await axios.post(localNodeEndpoint, data);
+                if (response.data.result.success) {
+                    this.hideFileDeleteModal()
+                    this.reload()
+                }
+            } catch (e) {
+                alert(e.message)
             }
         },
     }

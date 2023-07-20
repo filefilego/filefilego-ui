@@ -298,7 +298,7 @@ ipcMain.on("run-ffg", (evt, arg) => {
     args.push('--http_port=9036')
     args.push('--http_addr=127.0.0.1')
     // args.push(`--bootstrap_nodes=/dns/validator.local/tcp/10209/p2p/16Uiu2HAmVXbhxA1tiA9PRZJWwSk5jdMfWXbfeGWaubVeT7MZu8ie`)
-    args.push(`--bootstrap_nodes=/ip4/18.159.124.250/tcp/10209/p2p/16Uiu2HAmVXbhxA1tiA9PRZJWwSk5jdMfWXbfeGWaubVeT7MZu8ie`)
+    args.push(`--bootstrap_nodes=/dns/discovery.filefilego.com/tcp/10209/p2p/16Uiu2HAmVXbhxA1tiA9PRZJWwSk5jdMfWXbfeGWaubVeT7MZu8ie`)
   } catch (e) {
     console.log(e)
     return

@@ -247,7 +247,7 @@
                         <tbody>
                             <tr v-for="r in responses" :key="r.public_key">
                                 <td style="">
-                                    <span v-if="r.fees_per_byte == '0x0'"
+                                    <span v-if="r.fees_per_byte == '0x0' || isLessThan512KB(r)"
                                         style="background-color: rgb(62, 21, 202); line-height: 25px;"
                                         class="uk-badge">Free</span>
                                     <span style="font-size: 0.9em; margin-top:5px; margin-left: 5px;">
@@ -472,6 +472,9 @@ export default {
 
     },
     methods: {
+        isLessThan512KB(r){
+            return r.file_hashes_sizes.filter((o) => o >= 512 * 1024).length == 0
+        },
         restartDownload(d) {
             // not implemented
             d.fileDownloads = []
@@ -667,7 +670,7 @@ export default {
         },
         async download(r, destinationFolder = false) {
             this.downloadError = "";
-            if (r.fees_per_byte == "0x0") {
+            if (r.fees_per_byte == "0x0" || this.isLessThan512KB(r)) {
                 try {
                     let contracts = await this.createContract(this.dataQueryRequestHash, r.from_peer_addr)
                     if (contracts && contracts.length > 0) {

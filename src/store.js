@@ -19,6 +19,7 @@ const globalState = reactive({
     lastHowManyItemsToUpload: 0,
     uploadingData: false,
     uploadEndpoint: "http://127.0.0.1:9036/uploads",
+    mediaEndpoint: "http://127.0.0.1:9036/media",
     upload_data: [],
     name_conflicts: [],
 

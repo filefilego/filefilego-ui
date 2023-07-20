@@ -118,9 +118,9 @@
                 <span
                     style="padding: 10px; color: #ffff; background-color: #0160fe; border: 1px solid #0160fe; border-radius: 2px;">
                     <span uk-icon="upload"></span>
-                    <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
+                    <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinputnode"
                         class="custom-file-upload">Choose file</label>
-                    <input ref="fileInputNode" @click="$refs.fileInputNode.value=null" @change="selectFilesWithDestinationNode" style="display:none;" id="filesinput" type="file"
+                    <input :accept="acceptFileTypes()" ref="fileInputNode" @click="$refs.fileInputNode.value=null" @change="selectFilesWithDestinationNode" id="filesinputnode" type="file"
                         multiple />
                 </span>
             </div>
@@ -209,9 +209,9 @@
                 <span
                     style="padding: 10px; color: #ffff; background-color: #0160fe; border: 1px solid #0160fe; border-radius: 2px;">
                     <span uk-icon="upload"></span>
-                    <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
+                    <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinputother"
                         class="custom-file-upload">Choose file</label>
-                    <input ref="fileInputOther" @click="$refs.fileInputOther.value=null" @change="selectFilesWithDestinationOther" style="display:none;" id="filesinput" type="file"
+                    <input :accept="acceptFileTypes()" ref="fileInputOther" @click="$refs.fileInputOther.value=null" @change="selectFilesWithDestinationOther" id="filesinputother" type="file"
                         multiple />
                 </span>
             </div>
@@ -336,9 +336,9 @@
                     <span
                         style="padding: 10px; color: #ffff; background-color: #0160fe; border: 1px solid #0160fe; border-radius: 2px;">
                         <span uk-icon="upload"></span>
-                        <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinput"
+                        <label style="margin-left:5px; color:#fff; font-size: 1em; cursor:pointer;" for="filesinputnetwork"
                             class="custom-file-upload">Choose file</label>
-                        <input ref="fileInputNetwork" @change="selectFilesWithDestinationNetwork" style="display:none;"  @click="$refs.fileInputNetwork.value=null" id="filesinput" type="file"
+                        <input :accept="acceptFileTypes()" ref="fileInputNetwork" @change="selectFilesWithDestinationNetwork"  @click="$refs.fileInputNetwork.value=null" id="filesinputnetwork" type="file"
                             multiple />
                     </span>
                 </div>
@@ -433,7 +433,7 @@ import numberToBN from "number-to-bn";
 export default {
     components: {
     },
-    props: ["parent", "place", "callback"],
+    props: ["parent", "place", "callback", "accept", "uploadmedia", "maxsize", "maxfiles"],
     data() {
         return {
             loadingIntervalProgressBarNetworkUploads: null,
@@ -481,6 +481,29 @@ export default {
                     StopUpload()
                 }
 
+                if(this.uploadmedia && this.place == "channel") return;
+                if(this.uploadmedia) {
+                    if (this.place == "channel-entry") {
+                        let totalCompleted = val.filter((o) => {
+                            return o.from == 'channel-entry' && ((o.progress > 0 && o.size == o.progress && o.file_hash != "") || (o.error != ""))
+                        }).length
+
+                        if (totalCompleted > 0 && totalCompleted == this.lastHowManyItemsToUpload) {
+                            if(this.loadingIntervalProgressBarNetworkUploads != null) {
+                                clearInterval(this.loadingIntervalProgressBarNetworkUploads);
+                                this.loadingIntervalProgressBarNetworkUploads = null
+                            }
+
+                            let uploadedImages = val.filter((o) => {
+                                return o.from == 'channel-entry' && ((o.progress > 0 && o.size == o.progress && o.file_hash != "") || (o.error != ""))
+                            })
+                        
+                            this.callback(uploadedImages)
+                        }
+                    }
+                    return
+                }
+
                 if (this.place == "channel") {
                     let totalCompleted = val.filter((o) => {
                         return o.from == 'channel' && ((o.progress > 0 && o.size == o.progress && o.file_hash != "") || (o.error != ""))
@@ -516,6 +539,12 @@ export default {
         }
     },
     methods: {
+        acceptFileTypes() {
+            if(this.accept=="") {
+                return "*"
+            }
+            return this.accept
+        },
         async saveFilesInBlockchain() {
             const totalCompleted = this.uploadData.filter((o) => o.progress >= o.size).map((o) => {
                 return { 
@@ -671,8 +700,19 @@ export default {
             }
         },
         selectFilesWithDestinationNetwork(e) {
+            let count = 0
             for (let i = 0; i < e.target.files.length; i++) {
+                if(this.maxfiles>0 && count > this.maxfiles -1) {
+                    continue
+                }
+
+                if(this.maxsize > 0 && e.target.files[i].size > this.maxsize) {
+                    alert("file " + e.target.files[i].name + " must be smaller than 512KB")
+                    continue
+                }
                 if (e.target.files[i].size <= 0) continue;
+                count++;
+
                 let payload = {
                     remote_peer: this.selectedStorageProviderPeerIDForUpload,
                     upload_type : "network",
@@ -765,8 +805,19 @@ export default {
             this.selectFiles(e, this.otherNodeStorageToken, this.otherNodeRPCEndpoint, "other");
         },
         selectFiles(e, storageAccessToken, uploadEndpoint, uploadType) {
+            let count = 0
             for (let i = 0; i < e.target.files.length; i++) {
+                if(this.maxfiles>0 && count > this.maxfiles - 1) {
+                    continue
+                }
+
+                if(this.maxsize > 0 && e.target.files[i].size > this.maxsize) {
+                    alert("file " + e.target.files[i].name + " must be smaller than 512KB")
+                    continue
+                }
+
                 if (e.target.files[i].size <= 0) continue;
+                count++;
 
                 let payload = {
                     remote_peer: "",
@@ -837,4 +888,13 @@ export default {
     background-color: #160091;
     color: #ffffff;
     cursor: pointer;
-}</style>
+}
+
+input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+</style>

@@ -681,8 +681,8 @@
                                             class="normal-txt"> {{ node.file_hash }} </span>
                                         <br /> <span class="normal-txt" style="font-weight:500;"> File Merkle Hash:
                                         </span><span class="normal-txt"> {{ node.merkle_root }} </span>
-                                        <br /> <span class="normal-txt" style="font-weight:500;"> File Node Hash:
-                                        </span><span class="normal-txt"> {{ node.node_hash }} </span>
+                                        <!-- <br /> <span class="normal-txt" style="font-weight:500;"> File Node Hash:
+                                        </span><span class="normal-txt"> {{ node.node_hash }} </span> -->
                                         <br /> <span class="normal-txt" style="font-weight:500;"> Size: </span><span
                                             class="normal-txt"> {{ $filters.formatsize(node.size) }}</span>
                                         <br /> <span class="normal-txt" style="font-weight:500;"> Created At: </span><span
@@ -691,11 +691,15 @@
                                         <br /><br />
                                         <router-link style="margin-right: 10px;"
                                             :to="'/downloads?hash=' + node.file_hash + '&name=' + node.name">
-                                            <button class="uk-button ffg-button" style="width:150px; height:40px; ">
+                                            <button class="uk-button ffg-button" style="width:180px; height:40px; ">
                                                 Download
                                                 <span class="uk-icon" uk-icon="icon: download"></span>
                                             </button>
                                         </router-link>
+                                        <button @click="copyClipboard(node.file_hash)" onclick="UIkit.notification({pos: 'bottom-center',timeout: 2000 ,status:'success', message: '<span uk-icon=\'icon: check\'></span> File hash copied'})" class="uk-button" style="border: 1px solid #bfbfbf; width: 180px; border-radius: 4px; height: 40px; text-transform: none; ">
+                                            Copy hash
+                                            <span class="uk-icon" uk-icon="icon: link"></span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -980,6 +984,9 @@ export default {
         await this.loadMedia()
     },
     methods: {
+        async copyClipboard(text) {
+            await navigator.clipboard.writeText(text);
+        },
         getCoverImageURL() {
             if (this.downloadedMedia.length > 0) {
                 return this.globalState.mediaEndpoint + "?hash=" + this.downloadedMedia[0].name + "&type=" + this.downloadedMedia[0].ext
@@ -1447,6 +1454,9 @@ export default {
 }
 </script>
 
-<style scoped>#mediaviewer li:first-child>div {
+<style scoped>
+#mediaviewer li:first-child>div {
     background-color: #e5e5e5;
-}</style>
+}
+
+</style>

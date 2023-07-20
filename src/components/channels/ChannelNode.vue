@@ -1143,6 +1143,7 @@ export default {
                         SetEntryCreationMode(false);
                         this.entryName = "";
                         this.entry_content = "";
+                        this.mediaFiles = [];
                         return
                     }
                 }, 2000)
@@ -1374,7 +1375,7 @@ export default {
             const data = {
                 jsonrpc: '2.0',
                 method: "channel.GetNodeItem",
-                params: [{ node_hash: nodeHash, current_page: currentPage, page_size: pageSize, order: "asc" }],
+                params: [{ node_hash: nodeHash, current_page: currentPage, page_size: pageSize, order: "desc" }],
                 id: 1
             };
 

@@ -499,6 +499,10 @@ ipcMain.on("get-settings", (evt, arg) => {
   }
 });
 
+ipcMain.on("get-platform", (evt, arg) => {
+    evt.returnValue = process.platform;
+});
+
 function deleteFolder(folderPath) {
   if (fs.existsSync(folderPath)) {
     fs.rmSync(folderPath, { recursive: true, force: true });

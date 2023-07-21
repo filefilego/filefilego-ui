@@ -839,7 +839,7 @@
 </template>
         
 <script>
-// const { ipcRenderer } = window.require("electron");
+const { ipcRenderer } = window.require("electron");
 import axios from 'axios';
 import { globalState, SetEntryCreationMode } from '../../store';
 import { ref } from 'vue';
@@ -861,6 +861,7 @@ export default {
     },
     data() {
         return {
+            platform: "",
             downloadedMedia: [],
             loadingMedia: false,
             mediaFiles: [],
@@ -964,6 +965,8 @@ export default {
 
     },
     async mounted() {
+        this.platform = ipcRenderer.sendSync("get-platform", {});
+
         SetEntryCreationMode(false);
         const addr = ref(globalState.nodeAddress);
         if (addr.value != "") {
@@ -1335,9 +1338,18 @@ export default {
 
                         hashesWithExt.filter((o) => {
                             mediaRes.data.result.downloaded_files.filter((j) => {
-                                if (o.name == path.basename(j)) {
-                                    this.downloadedMedia.push(o)
+                                if(this.platform === 'win32') {
+                                    const pathSegments = j.split('\\');
+                                    const fileName = pathSegments[pathSegments.length - 1];
+                                    if(o.name == fileName) {
+                                        this.downloadedMedia.push(o)
+                                    }
+                                } else {
+                                    if (o.name == path.basename(j)) {
+                                        this.downloadedMedia.push(o)
+                                    }
                                 }
+
                             })
                         })
                     }

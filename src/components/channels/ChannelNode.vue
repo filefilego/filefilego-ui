@@ -707,6 +707,21 @@
                     </div>
                 </div>
             </div>
+
+            <div class="uk-visible@s uk-flex uk-flex-center" v-if="node.nodes.length > 0">
+                <pagination-bar
+                    size="m-l"
+                    :range="pagination.range"
+                    :total="pagination.total"
+                    :last_page="pagination.last_page"
+                    :page="pagination.page"
+                    :first_page_url="pagination.first_page_url"
+                    :last_page_url="pagination.last_page_url"
+                    :next_page_url="pagination.next_page_url"
+                    :previous_page_url="pagination.previous_page_url"
+                />
+            </div>
+
         </div>
 
         <div id="modal-newfolder" uk-modal="container:#node-container">
@@ -845,7 +860,6 @@ import { globalState, SetEntryCreationMode } from '../../store';
 import { ref } from 'vue';
 import { Units } from "../../unit.js"
 import BigNumber from 'bignumber.js';
-import Pagination from "../../pagination.js";
 import { callJsonRpc2Endpoint } from '../../rpc'
 import numberToBN from "number-to-bn";
 import { QuillEditor } from '@vueup/vue-quill'
@@ -853,14 +867,18 @@ import UploaderComponent from '../UploaderComponent.vue'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import ftype from "../../filetype";
 import path from "path"
+import PaginationBar from "./../PaginationBar.vue"
+import Pagination from "../../pagination.js";
 
 export default {
     components: {
+        PaginationBar,
         QuillEditor,
         UploaderComponent
     },
     data() {
         return {
+            pagination: {},
             platform: "",
             downloadedMedia: [],
             loadingMedia: false,
@@ -913,7 +931,7 @@ export default {
             creatingSubChannel: false,
             node: { name: "", node_type: 0, node_hash: "", nodes: [], owner: "" },
             loadingNode: false,
-            page_size: "1000",
+            page_size: "100",
             nodeAddress: "",
             colors: [
                 "#3e15ca",
@@ -1365,23 +1383,43 @@ export default {
             const paginationParams = paginator.extractPaginationData();
             this.loadingNode = true;
             try {
-                const res = await this.getNode(
+                const [res, subchannelRes] = await Promise.all([this.getNode(
                     this.$route.params.hash,
-                    parseInt(req.query.page) - 1,
-                    paginationParams.limit
-                );
+                    parseInt(req.query.page),
+                    paginationParams.limit,
+                    "desc",
+                    "",
+                    "SUBCHANNEL" // excludes subchannels
+                ), this.getNode(
+                    this.$route.params.hash,
+                    0,
+                    1000,
+                    "asc",
+                    "SUBCHANNEL",
+                    ""
+                )]);
+
+                if (subchannelRes.node && subchannelRes.node != null) {
+                    let subChannels = subchannelRes.node.nodes.filter(item => item.node_type == 2)
+                    this.subchannels = subChannels;
+                }
+
 
                 if (res.node && res.node != null) {
-                    let subChannels = res.node.nodes.filter(item => item.node_type == 2)
                     let otherEntries = res.node.nodes.filter(item => item.node_type > 2)
-                    this.subchannels = subChannels;
                     this.otherChannelNodes = otherEntries;
 
                     this.node = res.node;
                 }
 
-                paginator.paginate({ rows: this.node.nodes, count: res.total });
+                let subChannLength = this.subchannels.length
+                if(subChannLength > 0) {
+                    subChannLength++
+                }
+                
+                paginator.paginate({ rows: this.node.nodes, count: res.total_child_nodes - subChannLength });
                 let pl = paginator.payload();
+                console.log("pl" , pl)
                 this.pagination = { ...pl };
             } catch (e) {
                 // this.loadingChannelError = true;
@@ -1390,11 +1428,11 @@ export default {
                 this.loadingNode = false;
             }
         },
-        async getNode(nodeHash, currentPage, pageSize) {
+        async getNode(nodeHash, currentPage, pageSize, order, childNodeTypes, excludeChildNodeItem) {
             const data = {
                 jsonrpc: '2.0',
                 method: "channel.GetNodeItem",
-                params: [{ node_hash: nodeHash, current_page: currentPage, page_size: pageSize, order: "desc" }],
+                params: [{ node_hash: nodeHash, current_page: currentPage, page_size: pageSize, order: order, child_node_items_type: childNodeTypes, exclude_child_item_type: excludeChildNodeItem }],
                 id: 1
             };
 

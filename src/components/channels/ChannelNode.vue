@@ -1005,6 +1005,21 @@ export default {
         await this.loadMedia()
     },
     methods: {
+        hexToBytes(hex) {
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < hex.length; i += 2) {
+                bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+            }
+            return bytes;
+        },
+        calculateSha256Hash(parentHash, itemName) {
+            const parent = Buffer.from(parentHash.slice(2), 'hex');
+            const data = Buffer.concat([parent, Buffer.from(itemName)]);
+            return ipcRenderer.sendSync("sha256", data);
+        },
+        navigateToChannelNode(channelNodeHash) {
+            this.$router.push("/channels/node/" + channelNodeHash);
+        },
         async copyClipboard(text) {
             await navigator.clipboard.writeText(text);
         },
@@ -1167,11 +1182,13 @@ export default {
                     if (res.transactions && res.transactions.length > 0) {
                         this.creatingEntry = false;
                         clearInterval(loadTxInterval);
-                        await this.reload()
                         SetEntryCreationMode(false);
+                        // calculate hash before we reset the name
+                        let nodeHashCalculated = this.calculateSha256Hash(this.node.node_hash, this.entryName);
                         this.entryName = "";
                         this.entry_content = "";
                         this.mediaFiles = [];
+                        this.navigateToChannelNode(nodeHashCalculated);
                         return
                     }
                 }, 2000)

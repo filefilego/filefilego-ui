@@ -23,6 +23,9 @@ const globalState = reactive({
     upload_data: [],
     name_conflicts: [],
 
+    remoteUploadEndpoint: "",
+    remoteUploadAccessToken: "",
+
     rpcEndpoint: "",
     password: "",
     node_type: "",
@@ -403,6 +406,12 @@ export function SetRpcEndpoint(nodeType) {
 
 export function SetPublicStorage(storagePublic){
     globalState.storagePublic = storagePublic;
+}
+
+export function SetRemoteUploadSettings(endpoint, accessToken){
+    globalState.remoteUploadEndpoint = endpoint;
+    globalState.remoteUploadAccessToken = accessToken;
+
 }
 
 export function SetHowManyItemsToUpload(items) {

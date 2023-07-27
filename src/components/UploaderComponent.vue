@@ -451,6 +451,14 @@ export default {
         if (addr.value != "") {
             this.nodeAddress = addr.value;
         }
+
+        let st = ipcRenderer.sendSync("get-settings", {});
+        if(st.error != "") {
+            return
+        }
+
+        this.otherNodeRPCEndpoint = st.settings.remoteUploadEndpoint || "";
+        this.otherNodeStorageToken = st.settings.remoteUploadAccessToken || "";
     },
     computed: {
         lastHowManyItemsToUpload() {
@@ -539,6 +547,27 @@ export default {
         }
     },
     methods: {
+        saveRemoteUploadSettings() {
+            // if empty endpoint and access token just ignore
+            if(this.otherNodeRPCEndpoint == "" && this.otherNodeStorageToken=="") {
+                return;
+            }
+
+            let st = ipcRenderer.sendSync("get-settings", {});
+            if(st.error != "") {
+                alert("failed to load settings.json")
+                return
+            }
+
+            st.settings.remoteUploadEndpoint = this.otherNodeRPCEndpoint;
+            st.settings.remoteUploadAccessToken = this.otherNodeStorageToken;
+
+            const saveRes = ipcRenderer.sendSync("save-settings", st.settings);
+            if(saveRes.error != "") {
+                alert(saveRes.error);
+            }
+            console.log("saved settings")
+        },
         acceptFileTypes() {
             if(this.accept=="") {
                 return "*"
@@ -785,6 +814,7 @@ export default {
             return img;
         },
         startUploading() {
+            this.saveRemoteUploadSettings();
             if(this.uploadingData) return;
             if (this.uploadData.length == 0) return;
 

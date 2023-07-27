@@ -56,7 +56,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr style="" v-for="f in files" :key="f.hash">
+                            <tr style="" v-for="f in files" :key="f">
                                 <td style="width:32px;">
                                     <span uk-tooltip="File is on the network" v-if="f.remote_peer != ''" uk-icon="world"></span>
                                     <span uk-tooltip="File is on your node" v-else uk-icon="desktop"></span>
@@ -163,7 +163,7 @@ export default {
             pagination: {},
             nodeAddress: "",
             files: [],
-            page_size: 100
+            page_size: 10
         }
     },
     computed: {
@@ -240,8 +240,6 @@ export default {
                 this.loadingFiles = true;
                 const paginator = new Pagination.Pagination(req);
                 const paginationParams = paginator.extractPaginationData();
-                this.loadingChannels = true;
-
 
                 const data = {
                     jsonrpc: '2.0',
@@ -253,13 +251,12 @@ export default {
                 
                 let response = await axios.post(localNodeEndpoint, data);
                 if (response.data.result.files && response.data.result.files != null) {
-                    this.files = [...response.data.result.files];
+                    this.files = response.data.result.files;
                 }
 
                 paginator.paginate({ rows: this.files, count: response.data.result.total });
                 let pl = paginator.payload();
                 this.pagination = { ...pl };
-                
             } catch (e) {
                 alert(e.message)
             } finally {

@@ -33,6 +33,24 @@
                 <div class="uk-navbar-right">
                     <ul class="uk-navbar-nav">
                         <li>
+                            <button style="text-transform: none; border-radius: 3px; border:1px solid #ababab;" class="uk-button uk-button-default" type="button">
+                                Tools
+                                <span class="uk-icon" uk-icon="icon: cog"></span>
+                            </button>
+                            <div style="padding: 14px;" uk-dropdown="mode: click">
+                                <ul class="uk-nav uk-dropdown-nav">
+                                    <li><a style="color:#4e4e4e;" @click="importUploadedFiles()">
+                                        <span class="uk-icon" uk-icon="icon: pull"></span>
+                                        Import files
+                                    </a></li>
+                                    <li style="margin-top:9px;"><a style="color:#4e4e4e;" @click="exportUploadedFiles()">
+                                        <span class="uk-icon" uk-icon="icon: push"></span>
+                                        Export files
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
                             <button @click="openUploadModal" class="uk-button ffg-button"
                                 style="width:180px; height:40px; ">
                                 Upload
@@ -141,7 +159,7 @@
 </template>
         
 <script>
-// const { ipcRenderer } = window.require("electron");
+const { ipcRenderer } = window.require("electron");
 import UploaderComponent from './../UploaderComponent.vue'
 import axios from 'axios';
 import { globalState } from '../../store';
@@ -209,6 +227,46 @@ export default {
 
     },
     methods: {
+        async importUploadedFiles() {
+            try {
+                let selected = ipcRenderer.sendSync("select-file", {})
+                if(selected.filePaths && selected.filePaths.length > 0) {
+                    const data = {
+                        jsonrpc: '2.0',
+                        method: "storage.ImportUploadedFiles",
+                        params: [{ access_token: this.globalState.jwtAccessToken, filepath: selected.filePaths[0] }],
+                        id: 1
+                    };
+    
+                    let response = await axios.post(localNodeEndpoint, data);
+                    if (response.data.result.success) {   
+                      this.reload()
+                    }
+                }
+            } catch (e) {
+                alert(e.message);
+            }
+        },
+        async exportUploadedFiles() {
+            try {
+                let selected = ipcRenderer.sendSync("select-dir", {})
+                if(selected.filePaths && selected.filePaths.length > 0) {
+                    const data = {
+                        jsonrpc: '2.0',
+                        method: "storage.ExportUploadedFiles",
+                        params: [{ access_token: this.globalState.jwtAccessToken, save_to_filepath: selected.filePaths[0] }],
+                        id: 1
+                    };
+    
+                    let response = await axios.post(localNodeEndpoint, data);
+                    if (response.data.result.saved_filepath) {   
+                        ipcRenderer.sendSync("showItemInFolder", response.data.result.saved_filepath)
+                    }
+                }
+            } catch (e) {
+                alert(e.message);
+            }
+        },
         async reload() {
             let page = this.$route.query.page || 1;
             const req = {

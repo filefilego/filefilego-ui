@@ -336,6 +336,21 @@ ipcMain.on("select-dir", async (evt, arg) => {
   evt.returnValue = res;
 });
 
+ipcMain.on("select-file", async (evt, arg) => {
+  if(process.platform === 'linux') {
+    win.hide();
+  }
+  const res = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+    title: "Select File",
+    properties: ['openFile']
+  })
+  if(process.platform === 'linux') {
+    win.show();
+  }
+  evt.returnValue = res;
+});
+
+
 let isMax = false;
 ipcMain.on("maximize", (evt, arg) => {
   if (isMax) {
@@ -471,9 +486,7 @@ ipcMain.on("save-downloads", (evt, arg) => {
     }
 
     settings.downloads = arg;
-
     saveJsonToFileSync(settings, path.join(homeDir, "settings.json"))
-
     evt.returnValue = { error: "" }
 
   } catch (e) {
@@ -514,6 +527,12 @@ function deleteFolder(folderPath) {
 
 ipcMain.on("open-folder", (evt, arg) => {
   shell.openPath(arg);
+  evt.returnValue = true;
+});
+
+
+ipcMain.on("showItemInFolder", (evt, arg) => {
+  shell.showItemInFolder(arg);
   evt.returnValue = true;
 });
 

@@ -122,7 +122,7 @@
         let numberOfTries = 0;
         this.checkInterval = setInterval(async() => {
           numberOfTries++
-          if(numberOfTries == 40) {
+          if(numberOfTries == 80) {
             clearInterval(this.checkInterval);
             this.loading = false
             this.error = "Failed to initialize filefilego after 40 attemps. Please make sure no other instance of filefilego is running on this device."

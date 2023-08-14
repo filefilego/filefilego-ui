@@ -35,6 +35,7 @@ const globalState = reactive({
     storageFees: "",
     jwtAccessToken: "",
     nodeAddress: "",
+    publicKey: "",
     peerID: "",
     peerCount: 0,
     storagePublic: false,
@@ -572,9 +573,10 @@ export function SetBalanceNounce(balance, currentNoounce, nextNounce) {
     globalState.nextNounce = nextNounce;
 }
 
-export function SetNodeAddress(addr, peerID) {
+export function SetNodeAddress(addr, peerID, pub) {
     globalState.nodeAddress = addr;
     globalState.peerID = peerID;
+    globalState.publicKey = pub;
 }
 
 export function SetPeerCount(count) {

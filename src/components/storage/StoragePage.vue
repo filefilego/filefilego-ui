@@ -30,6 +30,32 @@
                         </li>
                     </ul>
                 </div>
+                <div class="uk-navbar-right">
+                    <ul class="uk-navbar-nav">
+                        <li>
+                            <button style="text-transform: none; border-radius: 3px; border:1px solid #ababab;" class="uk-button uk-button-default" type="button">
+                                Add Provider
+                                <span class="uk-icon" uk-icon="icon: server"></span>
+                            </button>
+                            <div id="add_provider_dropdown" style="padding: 14px;" uk-dropdown="mode: click; delay-hide:0;">
+                                <ul class="uk-nav uk-dropdown-nav">
+                                    <li>
+                                        <a style="color:#4e4e4e;" @click="showAddProviderModal()">
+                                            <span class="uk-icon" uk-icon="icon: server"></span>
+                                            HTTP Access Token
+                                        </a>
+                                    </li>
+                                    <!-- <li style="margin-top:9px;">
+                                        <a style="color:#4e4e4e;" @click="exportUploadedFiles()">
+                                            <span class="uk-icon" uk-icon="icon: server"></span>
+                                            Peer ID
+                                        </a>
+                                    </li> -->
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </nav>
             <div style="border:1px solid #d7d7d7; border-radius: 2px;">
                 <div style="padding:10px;">
@@ -37,6 +63,7 @@
                         <thead>
                             <tr>
                                 <th style="text-transform: none; width:20px;"><span style="color:#000;"> # </span></th>
+                                <th style="text-transform: none; width:120px;"><span style="color:#000;"> Type </span></th>
                                 <th style="text-transform: none;"><span style="color:#000;"> Peer ID </span></th>
                                 <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Space </span></th>
                                 <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Uptime </span></th>
@@ -51,6 +78,7 @@
                                     <span uk-tooltip="Save peer" v-if="!isSelected(p)"  :class="isSelected(p) ? 'uk-button-selected' : ''" @click="saveStoragePeer(p)" style="cursor: pointer;" class="uk-icon-button uk-margin-small-right" uk-icon="star"></span>
                                     <span uk-tooltip="Remove peer" v-else :class="isSelected(p) ? 'uk-button-selected' : ''" @click="removeStoragePeer(p)" style="cursor: pointer;" class="uk-icon-button uk-margin-small-right" uk-icon="star"></span>
                                 </td>
+                                <td class="normal-txt">{{ p.access_type == "public_storage" ? "Public Storage" : "Access Token" }}</td>
                                 <td class="normal-txt uk-text-truncate">{{ p.storage_provider_peer_addr }}</td>
                                 <td class="normal-txt">
                                     {{ $filters.formatsize(p.storage_capacity) }}
@@ -77,13 +105,18 @@
                                    
                                     <span v-if="getSpeedTestLoading(p)" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
                                     <div v-else>
-                                        <button v-if="getSpeedTest(p) == ''" @click="perfromSpeedTest(p)" class="uk-button ffg-button"
-                                            style="padding:5px;  margin:0px; height:30px; font-size: 0.9em; line-height: 0.9em;">
-                                            Speed Test
-                                        </button>
-                                        <span v-else>
-                                            {{ getSpeedTest(p) }} MB/s
-                                        </span>
+                                        <div v-if="p.access_type =='public_storage'">
+                                            <button v-if="getSpeedTest(p) == ''" @click="perfromSpeedTest(p)" class="uk-button ffg-button"
+                                                style="padding:5px;  margin:0px; height:30px; font-size: 0.9em; line-height: 0.9em;">
+                                                Speed Test
+                                            </button>
+                                            <span v-else>
+                                                {{ getSpeedTest(p) }} MB/s
+                                            </span>
+                                        </div>
+                                        <div v-else>
+                                            N/A
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="normal-txt">{{ getFees(p.fees_per_byte) }} FFG</td>
@@ -110,6 +143,41 @@
                 </div>
             </div>
         </div>
+
+        <div id="modal-addstorage" uk-modal="container: #storage-container; esc-close:false; bg-close:false;">
+            <div style="padding-top:17px; width:60%; padding-bottom: 20px;" class="uk-modal-dialog uk-modal-body">
+                <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 class="modal-header">Add Provider with Storage Access Token</h2>
+                <span class="normal-txt">You can add a storage provider by entering the node's HTTP endpoint and access token.</span>
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: world"></span>
+                        <input v-model="storageEndpoint" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="HTTP Endpoint" aria-label="Input">
+                    </div>
+                </div>
+                <div style="padding: 10px; margin-top:5px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
+                        <input v-model="storageAccessToken" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="Storage Access Token" aria-label="Input">
+                    </div>
+                </div>
+                
+                <div style="padding: 10px; margin-top:5px; text-align: center;">
+                    <button v-if="!addingProvider" @click="addStorageProviderWithToken()" class="uk-button ffg-button" style="font-weight: bold; text-transform: none; width:200px; height:50px;">
+                        Add provider
+                        <span class="uk-icon" uk-icon="icon: thumbnails"></span>
+                    </button>
+                    <div v-else style="text-align:center;">
+                        <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                    </div>
+                    <br />
+                    <div v-if="addProviderError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;" uk-icon="icon: warning;"></span> {{ addProviderError  }} </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </template>
         
@@ -126,6 +194,10 @@ export default {
     components: {},
     data() {
         return {
+            addingProvider: false,
+            addProviderError: "",
+            storageEndpoint: "http://node1storage.local:8090",
+            storageAccessToken: "",
             speedTestErrors: {},
             loadingSpeedTest: {},
             speedTest: {},
@@ -154,6 +226,76 @@ export default {
         }
     },
     methods: {
+        parseURL(url) {
+            try {
+                const parsedURL = new URL(url);
+                const domain = parsedURL.hostname;
+                const port = parsedURL.port;
+                const protocol = parsedURL.protocol;
+                
+                let baseUrl = protocol + '//' + domain;
+                if (port) {
+                baseUrl += ':' + port;
+                }
+                
+                return {
+                domain: domain,
+                port: port,
+                baseUrl: baseUrl
+                };
+            } catch (error) {
+                return null;
+            }
+        },
+        async addStorageProviderWithToken() {
+            try {
+                this.addingProvider = true;
+                this.addProviderError = "";
+                const headers = {
+                    'Authorization': this.storageAccessToken,
+                    'Content-Type': 'application/json'
+                };
+                let endPoint = this.parseURL(this.storageEndpoint)
+                if(!endPoint) {
+                    this.addProviderError = "Invalid endpoint";
+                    return
+                }
+                let response = await axios.post(endPoint.baseUrl + "/storage/introspect", {}, { headers })
+                
+                let remoteNodeWithAccess = response.data;
+                remoteNodeWithAccess.access_type = "access_token"
+                remoteNodeWithAccess.location = "";
+                remoteNodeWithAccess.hash = "";
+                remoteNodeWithAccess.signature = "";
+                remoteNodeWithAccess.country = {};
+                remoteNodeWithAccess.http_upload_endpoint = endPoint.baseUrl;
+
+                let isDupe = false;
+                this.providers.forEach(obj => {
+                    if(remoteNodeWithAccess.storage_provider_peer_addr == obj.storage_provider_peer_addr && remoteNodeWithAccess.access_type == obj.access_type) {
+                        obj = remoteNodeWithAccess;
+                        isDupe = true;
+                    }
+                })
+                if(!isDupe) {
+                    this.providers.push(remoteNodeWithAccess);
+                    this.saveStoragePeer(remoteNodeWithAccess);
+                }
+                this.hideAddProviderModal();
+            } catch (e) {
+                if(e.code == "ERR_BAD_REQUEST") {
+                    if(e.response.data.error == "failed to get value: leveldb: not found") {
+                        this.addProviderError = "Invalid storage access token"
+                    } else {
+                        this.addProviderError = e.response.data.error;
+                    }
+                } else {
+                    this.addProviderError = e.message;
+                }
+            } finally {
+                this.addingProvider = false;
+            }
+        },
         speedTestError(p) {
             if(this.speedTestErrors[p.storage_provider_peer_addr] !== undefined) {
                 if(this.speedTestErrors[p.storage_provider_peer_addr].includes("no addresses")) {
@@ -283,7 +425,26 @@ export default {
                 };
 
                 let response = await axios.post(localNodeEndpoint, data);
-                this.providers = [...response.data.result.storage_providers];
+
+                // add the type of the storage
+                response.data.result.storage_providers.forEach(obj => {
+                    obj.access_type = "public_storage";
+                    let dupeProvider = false;
+                    this.providers.forEach(prov => {
+                        if(prov.storage_provider_peer_addr == obj.storage_provider_peer_addr && prov.access_type == obj.access_type) {
+                            prov = obj
+                            dupeProvider = true;
+                        }
+                    })
+
+                    if(!dupeProvider) {
+                        this.providers.push(obj)    
+                    }
+                });
+
+
+
+                this.providers
             } catch (e) {
                 console.log(e.message)
             } finally {
@@ -352,6 +513,17 @@ export default {
             const endpoint = ref(globalState.rpcEndpoint);
             const response = await axios.post(endpoint.value, data);
             return response.data.result;
+        },
+        showAddProviderModal() {
+            window.UIkit.dropdown(document.getElementById("add_provider_dropdown")).hide();
+            const myModal = document.getElementById('modal-addstorage');
+            const modal = window.UIkit.modal(myModal);
+            modal.show();
+        },
+        hideAddProviderModal() {
+            const myModal = document.getElementById('modal-addstorage');
+            const modal = window.UIkit.modal(myModal);
+            modal.hide();
         },
     }
 }

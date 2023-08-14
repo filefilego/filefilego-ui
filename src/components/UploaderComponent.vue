@@ -137,7 +137,7 @@
                 </button>
             </div>
         </div>
-        <div v-if="uploadType == 'other'">
+        <!-- <div v-if="uploadType == 'other'">
             <div style="text-align: center; padding-bottom: 10px;">
                 <span class="normal-txt" style="font-weight: 500;"> Enter the RPC endpoint and credentials to upload files to remote storage provider:</span>
             </div>
@@ -228,30 +228,32 @@
                     <span class="uk-icon" uk-icon="icon:  upload"></span>
                 </button>
             </div>
-        </div>
+        </div> -->
         <div v-if="uploadType == 'network'">
-            <div v-if="selectedStorageProviderPeerIDForUpload == ''" style="text-align: center; padding-bottom: 10px;">
+            <div v-if="selectedStorageProviderPeerIDForUpload == null" style="text-align: center; padding-bottom: 10px;">
                 <span class="normal-txt" style="font-weight: 500;"> Select a storage provider from your saved list to upload data to:</span>
             </div>
-            <div v-if="selectedStorageProviderPeerIDForUpload == ''" style="max-height:500px; overflow-y:auto;">
+            <div v-if="selectedStorageProviderPeerIDForUpload == null" style="max-height:500px; overflow-y:auto;">
                 <table v-if="providers.length > 0" id="storage-providers" class="uk-table uk-table-striped uk-table-middle uk-table-justify">
                     <thead>
                         <tr class="tr-heeader">
-                            <th><span style="color:#000;"> Peer ID </span></th>
-                            <th style="width:40px;"> <span style="color:#000;"> Space </span></th>
-                            <th style="width:40px;"> <span style="color:#000;"> Uptime </span></th>
-                            <th style="width:40px;"> <span style="color:#000;"> Country </span></th>
-                            <th style="width:180px;"> <span style="color:#000;"> Fees per byte </span> </th>
+                            <th style="text-transform: none; width:120px;"><span style="color:#000;"> Type </span></th>
+                            <th style="text-transform: none;"><span style="color:#000;"> Peer ID </span></th>
+                            <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Space </span></th>
+                            <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Uptime </span></th>
+                            <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Country </span></th>
+                            <th style="text-transform: none; width:180px;"> <span style="color:#000;"> Fees per byte </span> </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr @click="selectSP(p)" style="" v-for="p in providers" :key="p.public_key">
+                            <td class="uk-text-truncate">{{ p.access_type == "public_storage" ? "Public Storage" : "Access Token" }}</td>
                             <td class="uk-text-truncate">{{ p.storage_provider_peer_addr }}</td>
                             <td>
                                 {{ $filters.formatsize(p.storage_capacity) }}
                             </td>
                             <td>
-                                {{ secondsToHours(p.uptime_seconds, 2) }} h
+                                {{ secondsToHours(p.uptime_seconds) }}
                             </td>
                             <td style="text-align: center;">
                                 <span v-if="getCountry(p) == '' || getCountry(p) == 'fi-'">
@@ -272,7 +274,7 @@
             <div v-else>
                 <div v-if="uploadData.length > 0" style="padding-top:10px;  max-height:500px; overflow-y:auto;">
                     <div v-for="(u, idx) in uploadData" :key="'up' + idx">
-                        <div v-if="!u.rpc_upload"
+                        <div
                             style="border-top:1px solid #ededed; padding:0px; margin:0px; padding-bottom:8px;" uk-grid>
                             <div class="uk-width-expand" style="vertical-align:middle;">
                                 <div style="padding:10px;" uk-grid>
@@ -351,7 +353,13 @@
                     <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
                 </button>
 
-                <button :disabled="uploadingData" v-if="selectedStorageProviderPeerIDForUpload != ''" @click="startUploadingNetwork"
+                <button v-if="selectedStorageProviderPeerIDForUpload != null && selectedStorageProviderPeerIDForUpload.access_type =='access_token'" :disabled="uploadingData" @click="startUploading"
+                    class="uk-button ffg-button">
+                    Upload
+                    <span class="uk-icon" uk-icon="icon:  upload"></span>
+                </button>
+
+                <button v-if="selectedStorageProviderPeerIDForUpload != null && selectedStorageProviderPeerIDForUpload.access_type !='access_token'" :disabled="uploadingData" @click="startUploadingNetwork"
                     class="uk-button ffg-button">
                     Upload
                     <span class="uk-icon" uk-icon="icon:  upload"></span>
@@ -436,10 +444,10 @@ export default {
     props: ["parent", "place", "callback", "accept", "uploadmedia", "maxsize", "maxfiles"],
     data() {
         return {
+            filesOwnerPublicKey: "",
             loadingIntervalProgressBarNetworkUploads: null,
-            selectedStorageProviderPeerIDForUpload: "",
-            otherNodeRPCEndpoint: "",
-            otherNodeStorageToken: "",
+            selectedStorageProviderPeerIDForUpload: null,
+           
             uploadType: "",
             nodeAddress:"",
             creatingFilesOnBlockchain: false,
@@ -452,13 +460,20 @@ export default {
             this.nodeAddress = addr.value;
         }
 
+        console.log(globalState)
+        const pubKey = ref(globalState.publicKey);
+        console.log(pubKey.value)
+        if(pubKey.value != "") {
+            this.filesOwnerPublicKey = pubKey.value;
+        }
+
         let st = ipcRenderer.sendSync("get-settings", {});
         if(st.error != "") {
             return
         }
 
-        this.otherNodeRPCEndpoint = st.settings.remoteUploadEndpoint || "";
-        this.otherNodeStorageToken = st.settings.remoteUploadAccessToken || "";
+        
+      
     },
     computed: {
         lastHowManyItemsToUpload() {
@@ -547,27 +562,6 @@ export default {
         }
     },
     methods: {
-        saveRemoteUploadSettings() {
-            // if empty endpoint and access token just ignore
-            if(this.otherNodeRPCEndpoint == "" && this.otherNodeStorageToken=="") {
-                return;
-            }
-
-            let st = ipcRenderer.sendSync("get-settings", {});
-            if(st.error != "") {
-                alert("failed to load settings.json")
-                return
-            }
-
-            st.settings.remoteUploadEndpoint = this.otherNodeRPCEndpoint;
-            st.settings.remoteUploadAccessToken = this.otherNodeStorageToken;
-
-            const saveRes = ipcRenderer.sendSync("save-settings", st.settings);
-            if(saveRes.error != "") {
-                alert(saveRes.error);
-            }
-            console.log("saved settings")
-        },
         acceptFileTypes() {
             if(this.accept=="") {
                 return "*"
@@ -666,10 +660,22 @@ export default {
             const modal = window.UIkit.modal(myModal);
             modal.hide();
         },
+        startUploading() {
+            // upload using http and access token
+            if(this.uploadingData) return;
+            if (this.uploadData.length == 0) return;
+
+            const uploads = this.uploadData.filter((o) => o.rpc_upload).filter((o) => o.progress < o.size && !o.canceled && o.error == "")
+
+            if (uploads.length == 0) {
+                return
+            }
+
+            StartUpload(uploads.length)
+        },
         async startUploadingNetwork() {
-
+            // upload using network tcp using backend
             const networkUploads = this.uploadData.filter((o) => !o.rpc_upload).filter((o) => o.progress < o.size && o.error == "")
-
             if (networkUploads.length == 0) {
                 return
             }
@@ -679,9 +685,11 @@ export default {
             const files = [];
             networkUploads.filter((o) => {
                 let f = {
-                    peer_id: this.selectedStorageProviderPeerIDForUpload,
+                    peer_id: this.selectedStorageProviderPeerIDForUpload.storage_provider_peer_addr,
                     file_path: o.filepath,
-                    channel_node_item_hash: ""
+                    channel_node_item_hash: "",
+                    owner_public_key: this.filesOwnerPublicKey,
+                    file_fees_per_byte: ""
                 }
 
                 if (this.parent && this.parent != "") {
@@ -728,22 +736,130 @@ export default {
                 alert("error " + e.message)
             }
         },
+        goBackNetwork() {
+            if (this.selectedStorageProviderPeerIDForUpload != null) {
+                this.selectedStorageProviderPeerIDForUpload = null;
+            } else {
+                this.uploadType = ''
+            }
+        },
+        selectSP(p) {
+            this.selectedStorageProviderPeerIDForUpload = p;
+        },
+        getFees(feesBig) {
+            try {
+                let feesBigVal = new BigNumber(feesBig, 10);
+                return Units.convert(feesBigVal.toString(10), "FFGOne", "FFG")
+            } catch (e) {
+                return ""
+            }
+        },
+        getCountry(p) {
+            if (p.country != undefined && p.country.Country != undefined && p.country.Country.IsoCode != undefined) {
+                return 'fi-' + p.country.Country.IsoCode.toLowerCase();
+            }
+            return "";
+        },
+        secondsToHours(uptimeInSeconds) {
+            const intervals = [
+                { unit: 'year', abbreviation: 'y', seconds: 31536000 },
+                { unit: 'month', abbreviation: 'mo', seconds: 2592000 },
+                { unit: 'week', abbreviation: 'w', seconds: 604800 },
+                { unit: 'day', abbreviation: 'd', seconds: 86400 },
+                { unit: 'hour', abbreviation: 'h', seconds: 3600 },
+                { unit: 'minute', abbreviation: 'm', seconds: 60 },
+                { unit: 'second', abbreviation: 's', seconds: 1 }
+            ];
+
+            for (const interval of intervals) {
+                if (uptimeInSeconds >= interval.seconds) {
+                const count = Math.floor(uptimeInSeconds / interval.seconds);
+                return `${count} ${interval.abbreviation}`;
+                }
+            }
+
+            return '0s'; // If uptime is zero or negative
+        },
+        removeItemFromUpload(idx) {
+            RemoveItemFromUpload(idx);
+        },
+        cancelItemFromUpload(idx) {
+            CancelItemFromUpload(idx);
+        },
+        getProgress(node) {
+            let pg = parseInt((node.progress / node.size) * 100)
+            let result = pg > 100 ? 100 : pg;
+            // make sure the file hash is there
+            if(result == 100 && node.file_hash == "") {
+                return 99;
+            }
+            return result
+        },
+        nodeVector(name) {
+            let img = `/assets/file_types/${ftype.getVectorOf(ftype.getExt(name))}.svg`;
+            return img;
+        },
+        parseURL(url) {
+            try {
+                const parsedURL = new URL(url);
+                const domain = parsedURL.hostname;
+                const port = parsedURL.port;
+                const protocol = parsedURL.protocol;
+                
+                let baseUrl = protocol + '//' + domain;
+                if (port) {
+                baseUrl += ':' + port;
+                }
+                
+                return {
+                domain: domain,
+                port: port,
+                baseUrl: baseUrl
+                };
+            } catch (error) {
+                return null;
+            }
+        },
+        selectFilesWithDestinationNode(e) {
+            const storageAccessToken = ref(globalState.storageAccessToken);
+            const uploadEndpoint = ref(globalState.uploadEndpoint);
+            this.selectFiles(e, storageAccessToken.value, uploadEndpoint.value, "node");
+        },
+        selectFilesWithDestinationOther(e) {
+            let accessToken = this.selectedStorageProviderPeerIDForUpload.access_token.token
+            let endpoint =  this.parseURL(this.selectedStorageProviderPeerIDForUpload.http_upload_endpoint)
+            if(!endpoint) {
+                alert("Invalid upload endpoint")
+                return
+            }
+
+            this.selectFiles(e, accessToken, endpoint.baseUrl + "/uploads", "other");
+        },
         selectFilesWithDestinationNetwork(e) {
+            // if upload to remote node using http call the above method
+            if(this.selectedStorageProviderPeerIDForUpload.access_type == "access_token") {
+                this.selectFilesWithDestinationOther(e);
+                return
+            }
+
+        
             let count = 0
             for (let i = 0; i < e.target.files.length; i++) {
                 if(this.maxfiles>0 && count > this.maxfiles -1) {
                     continue
                 }
 
+
                 if(this.maxsize > 0 && e.target.files[i].size > this.maxsize) {
                     alert("file " + e.target.files[i].name + " must be smaller than 512KB")
                     continue
                 }
                 if (e.target.files[i].size <= 0) continue;
+
                 count++;
 
                 let payload = {
-                    remote_peer: this.selectedStorageProviderPeerIDForUpload,
+                    remote_peer: this.selectedStorageProviderPeerIDForUpload.storage_provider_peer_addr,
                     upload_type : "network",
                     rpc_upload: false,
                     filepath: e.target.files[i].path,
@@ -765,79 +881,12 @@ export default {
                 AddToUploadData(payload, "", "", true);
             }
         },
-        goBackNetwork() {
-            if (this.selectedStorageProviderPeerIDForUpload != "") {
-                this.selectedStorageProviderPeerIDForUpload = "";
-            } else {
-                this.uploadType = ''
-            }
-        },
-        selectSP(p) {
-            this.selectedStorageProviderPeerIDForUpload = p.storage_provider_peer_addr;
-        },
-        getFees(feesBig) {
-            try {
-                let feesBigVal = new BigNumber(feesBig, 10);
-                return Units.convert(feesBigVal.toString(10), "FFGOne", "FFG")
-            } catch (e) {
-                return ""
-            }
-        },
-        getCountry(p) {
-            if (p.country != undefined && p.country.Country != undefined && p.country.Country.IsoCode != undefined) {
-                return 'fi-' + p.country.Country.IsoCode.toLowerCase();
-            }
-            return "";
-        },
-        secondsToHours(seconds, precision) {
-            const hours = seconds / (60 * 60);
-            const roundedHours = Number(hours.toFixed(precision));
-            return roundedHours;
-        },
-        removeItemFromUpload(idx) {
-            RemoveItemFromUpload(idx);
-        },
-        cancelItemFromUpload(idx) {
-            CancelItemFromUpload(idx);
-        },
-        getProgress(node) {
-            let pg = parseInt((node.progress / node.size) * 100)
-            let result = pg > 100 ? 100 : pg;
-            // make sure the file hash is there
-            if(result == 100 && node.file_hash == "") {
-                return 99;
-            }
-            return result
-        },
-        nodeVector(name) {
-            let img = `/assets/file_types/${ftype.getVectorOf(ftype.getExt(name))}.svg`;
-            return img;
-        },
-        startUploading() {
-            this.saveRemoteUploadSettings();
-            if(this.uploadingData) return;
-            if (this.uploadData.length == 0) return;
-
-            const uploads = this.uploadData.filter((o) => o.rpc_upload).filter((o) => o.progress < o.size && !o.canceled && o.error == "")
-
-            if (uploads.length == 0) {
-                return
-            }
-
-            StartUpload(uploads.length)
-        },
-        selectFilesWithDestinationNode(e) {
-            const storageAccessToken = ref(globalState.storageAccessToken);
-            const uploadEndpoint = ref(globalState.uploadEndpoint);
-            this.selectFiles(e, storageAccessToken.value, uploadEndpoint.value, "node");
-        },
-        selectFilesWithDestinationOther(e) {
-            this.selectFiles(e, this.otherNodeStorageToken, this.otherNodeRPCEndpoint, "other");
-        },
         selectFiles(e, storageAccessToken, uploadEndpoint, uploadType) {
+            console.log("i am here", storageAccessToken, uploadEndpoint, uploadType );
             let count = 0
             for (let i = 0; i < e.target.files.length; i++) {
                 if(this.maxfiles>0 && count > this.maxfiles - 1) {
+                    console.log("continue")
                     continue
                 }
 
@@ -849,6 +898,7 @@ export default {
                 if (e.target.files[i].size <= 0) continue;
                 count++;
 
+                console.log("prepare payload")
                 let payload = {
                     remote_peer: "",
                     upload_type : uploadType,

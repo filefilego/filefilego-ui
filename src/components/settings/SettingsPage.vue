@@ -75,12 +75,22 @@
               Allow Public Storage
               </label>
               <div class="uk-form-controls">
-                
-
                 <div class="uk-margin uk-grid-small uk-child-width-auto uk-grid">
                   <label><input v-model="allowPublicStorage" class="uk-checkbox" type="checkbox"> Allow everyone to store data on this computer</label>
                 </div>
+              </div>
+            </div>
 
+            <div class="uk-margin">
+              <label class="uk-form-label normal-txt" style="font-size:0.9em; font-weight: 500;" for="form-horizontal-text">
+                Allow Dynamic Fees
+              </label>
+              <div class="uk-form-controls">
+                
+
+                <div class="uk-margin uk-grid-small uk-child-width-auto uk-grid">
+                  <label><input v-model="allowDynamicFees" class="uk-checkbox" type="checkbox"> Allow users to set the fees for their uploaded data</label>
+                </div>
 
               </div>
             </div>
@@ -182,6 +192,7 @@ export default {
       downloadsDir: "",
       storageDir: "",
       allowPublicStorage: false,
+      allowDynamicFees: false,
       storageAccessToken: "",
       storageFeesPerByte: "",
       storageFeesIsValid: true,
@@ -199,6 +210,8 @@ export default {
     this.downloadsDir = globalState.downloadsPath;
     this.storageDir = globalState.storagePath;
     this.allowPublicStorage = globalState.storagePublic;
+    this.allowDynamicFees = globalState.allowDynamicFees;
+
     this.storageAccessToken = globalState.storageAccessToken;
     this.storageFeesPerByte = globalState.storageFees || "0.0000000001";
 
@@ -301,7 +314,7 @@ export default {
           st.settings.storageAccessToken = this.storageAccessToken;
           st.settings.storageFees = this.storageFeesPerByte;
           st.settings.storagePublic = this.allowPublicStorage;
-        
+          st.settings.allowDynamicFees = this.allowDynamicFees;
         }
 
         const saveRes = ipcRenderer.sendSync("save-settings", st.settings);

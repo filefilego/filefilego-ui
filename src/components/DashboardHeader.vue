@@ -1,6 +1,7 @@
 <template>
     <div class="dashboard-header" style="-webkit-app-region:drag;">  
       <span
+        v-if="hasPreviousPage()"
         @click="goBack"
         uk-icon="icon: arrow-left"
         class="clickable"
@@ -54,6 +55,9 @@
     watch: {
     },
     methods: {
+      hasPreviousPage() {
+        return window.history.state.back !== null
+      },
       goBack() {  
         if(this.entryMode) {
           SetEntryCreationMode(false);

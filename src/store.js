@@ -4,6 +4,9 @@ import axios from "axios";
 import uploader from "./uploader";
 import { callJsonRpc2Endpoint } from "./rpc.js"
 import path from "path"
+import { Units } from "./unit.js"
+import BigNumber from 'bignumber.js';
+
 const { ipcRenderer } = window.require("electron");
 
 const globalState = reactive({
@@ -35,9 +38,11 @@ const globalState = reactive({
     storageFees: "",
     jwtAccessToken: "",
     nodeAddress: "",
+    publicKey: "",
     peerID: "",
     peerCount: 0,
     storagePublic: false,
+    allowDynamicFees: false,
     channel_creation_fees_ffg_hex: "",
     remaining_channel_operation_fees_miliffg_hex: "",
     storage_providers: [],
@@ -80,7 +85,7 @@ var filesQueue = GlobalQueue.getInstance().getVariable()
 filesQueue.concurrency = 4;
 filesQueue.autostart = false;
 
-const asyncFunctionFactory = (item, storageAccessToken, uploadEndpoint) => {
+const asyncFunctionFactory = (item, storageAccessToken, uploadEndpoint, fileOwnerPublicKey) => {
     return () => {
         /* eslint-disable no-async-promise-executor */
         return new Promise(async (resolve, reject) => {
@@ -92,6 +97,10 @@ const asyncFunctionFactory = (item, storageAccessToken, uploadEndpoint) => {
                     // single file
                     item.cancel = axios.CancelToken.source();
                     let formData = new FormData();
+                    let feesPerByte = item.fees_per_byte;
+                    
+                    formData.append("fees_per_byte", feesPerByte);
+                    formData.append("public_key_owner", fileOwnerPublicKey);
                     formData.append("file", item.file);
                     formData.append("node_hash", item.node_hash);
 
@@ -404,8 +413,9 @@ export function SetRpcEndpoint(nodeType) {
     }
 }
 
-export function SetPublicStorage(storagePublic){
+export function SetPublicStorage(storagePublic, allowDynamic){
     globalState.storagePublic = storagePublic;
+    globalState.allowDynamicFees = allowDynamic;
 }
 
 export function SetRemoteUploadSettings(endpoint, accessToken){
@@ -477,7 +487,55 @@ export function RemoveItemFromUpload(index) {
     globalState.upload_data.splice(index, 1);
 }
 
-export function AddToUploadData(val, storageAccessToken, endPoint, onlyState) {
+export function ClearItemsFromUpload() {
+    globalState.upload_data = []
+}
+
+export function SetFeesAllUploads(fees) {
+    globalState.upload_data.forEach((obj) => {
+        try {
+            if(fees == "0") {
+                obj.fees_per_byte = "0";
+                obj.fees_input_model = "0"
+            } else {
+                let userFees = Units.convert(fees, "FFG", "FFGOne")
+                let userFeesFFGOne = new BigNumber(userFees, 10)
+                let sizeBig = new BigNumber(obj.size, 10);
+                let finalFeesPerByte = userFeesFFGOne.div(sizeBig)
+                obj.fees_per_byte = finalFeesPerByte.toFixed(0);
+                obj.fees_input_model = "set"
+                obj.fees_input_value = fees
+            }
+        } catch (e) {
+            alert("Enter a valid fee: " + e.message)
+        }
+    })
+}
+
+export function SetFeesUpload(idx, fees) {
+    if(fees == "0") {
+        globalState.upload_data[idx].fees_per_byte = "0"
+        globalState.upload_data[idx].fees_input_model = "0"
+    } else {
+        let sizeBig = new BigNumber(globalState.upload_data[idx].size, 10);
+        let userFees = Units.convert(fees, "FFG", "FFGOne")
+        let userFeesFFGOne = new BigNumber(userFees, 10)
+        let finalFeesPerByte = userFeesFFGOne.div(sizeBig)
+        globalState.upload_data[idx].fees_per_byte = finalFeesPerByte.toFixed(0);
+        globalState.upload_data[idx].fees_input_model = "set"
+        globalState.upload_data[idx].fees_input_value = fees
+    }
+}
+
+export function CheckAndFixFileFeesBeforeUpload() {
+    globalState.upload_data.forEach((o) => {
+        if(o.fees_input_model == "") {
+            o.fees_per_byte = ""
+        }
+    })
+}
+
+export function AddToUploadData(val, storageAccessToken, endPoint, onlyState, ownerPublicKey) {
     let isConflict = globalState.upload_data.filter((o) => o.name == val.name).length > 0;
     if (isConflict) {
         globalState.name_conflicts.push(val);
@@ -489,7 +547,8 @@ export function AddToUploadData(val, storageAccessToken, endPoint, onlyState) {
                     asyncFunctionFactory(
                         globalState.upload_data[globalState.upload_data.length - 1],
                         storageAccessToken,
-                        endPoint
+                        endPoint,
+                        ownerPublicKey
                     )
                 );
             }
@@ -550,8 +609,8 @@ export function SetDownloads(val) {
     }
 }
 
-export function RemoveStorageProviders(storage_provider_peer_addr) {
-    const index = globalState.storage_providers.findIndex(obj => obj.storage_provider_peer_addr === storage_provider_peer_addr);
+export function RemoveStorageProviders(storage_provider_peer_addr, accessType) {
+    const index = globalState.storage_providers.findIndex(obj => obj.storage_provider_peer_addr === storage_provider_peer_addr && obj.access_type == accessType);
     if (index !== -1) {
         globalState.storage_providers.splice(index, 1);
     }
@@ -572,9 +631,10 @@ export function SetBalanceNounce(balance, currentNoounce, nextNounce) {
     globalState.nextNounce = nextNounce;
 }
 
-export function SetNodeAddress(addr, peerID) {
+export function SetNodeAddress(addr, peerID, pub) {
     globalState.nodeAddress = addr;
     globalState.peerID = peerID;
+    globalState.publicKey = pub;
 }
 
 export function SetPeerCount(count) {

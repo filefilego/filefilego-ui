@@ -112,7 +112,7 @@
       try {
         const statsResult = await callJsonRpc2Endpoint("filefilego.HostInfo", []);
         this.nodeAddress = statsResult.data.result.address;
-        SetNodeAddress(this.nodeAddress, statsResult.data.result.peer_id);
+        SetNodeAddress(this.nodeAddress, statsResult.data.result.peer_id, statsResult.data.result.node_public_key);
         SetChannelOperationFees(statsResult.data.result.channel_creation_fees_ffg_hex, statsResult.data.result.remaining_channel_operation_fees_miliffg_hex);
         this.saveSettingsToStore(st.settings)
         this.loading = false;
@@ -132,7 +132,7 @@
           try {
             const statsResult = await callJsonRpc2Endpoint("filefilego.HostInfo", []);
             this.nodeAddress = statsResult.data.result.address;
-            SetNodeAddress(this.nodeAddress, statsResult.data.result.peer_id);
+            SetNodeAddress(this.nodeAddress, statsResult.data.result.peer_id), statsResult.data.result.node_public_key;
             SetChannelOperationFees(statsResult.data.result.channel_creation_fees_ffg_hex, statsResult.data.result.remaining_channel_operation_fees_miliffg_hex);
             this.saveSettingsToStore(st.settings);
             this.loading = false;
@@ -154,7 +154,7 @@
         SetStorageFees(settings.storageFees);
         SetStorageProviders(settings.storage_providers);
         SetDownloads(settings.downloads);
-        SetPublicStorage(settings.storagePublic);
+        SetPublicStorage(settings.storagePublic, settings.allowDynamicFees);
         if(settings.remoteUploadEndpoint != undefined && settings.remoteUploadAccessToken != undefined) {
           SetRemoteUploadSettings(settings.remoteUploadEndpoint, settings.remoteUploadAccessToken);
         }

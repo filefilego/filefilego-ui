@@ -1017,7 +1017,7 @@ export default {
                     };
                     const response = await axios.post(localNodeEndpoint, data);
 
-                    // response.data.result.responses.sort((a, b) => a.fees_per_byte != b.fees_per_byte && a.fees_per_byte == "0x0" ? -1 : 1);
+                    response.data.result.responses.sort((a, b) => a.fees_per_byte != b.fees_per_byte && this.isFreeDownload(a) ? -1 : 1);
                     this.responses = response.data.result.responses;
 
                 }, 1000)

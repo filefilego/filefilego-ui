@@ -35,7 +35,7 @@
                         <li>
                             <button style="text-transform: none; border-radius: 3px; border:1px solid #ababab;" class="uk-button uk-button-default" type="button">
                                 Tools
-                                <span class="uk-icon" uk-icon="icon: cog"></span>
+                                <span class="uk-icon" uk-icon="icon: nut"></span>
                             </button>
                             <div style="padding: 14px;" uk-dropdown="mode: click">
                                 <ul class="uk-nav uk-dropdown-nav">
@@ -80,6 +80,7 @@
                                     <span uk-tooltip="File is on your node" v-else uk-icon="desktop"></span>
                                 </td>
                                 <td class="normal-txt uk-text-truncate">
+                                    <span uk-tooltip="The file was deleted from your file system" v-if="!f.file_exists_on_node && f.remote_peer==''"  style="color:red;" uk-icon="icon:warning; ratio:0.9;" ></span>
                                     <span style="cursor: pointer;" @click="copyClipboard(f.file_name)" uk-tooltip="Copy" uk-icon="icon:copy; ratio:0.9;"></span> <span :uk-tooltip="f.file_name"> {{ f.file_name }} </span> 
                                 </td>
                                 <td class="normal-txt uk-text-truncate">

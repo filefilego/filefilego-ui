@@ -644,7 +644,6 @@ export default {
                 await navigator.clipboard.writeText(this.nodeAddress);
                 this.addressCopied = true;
             } catch (err) {
-                console.log(err.message)
                 alert("failed to copy address")
             }
         }

@@ -154,7 +154,7 @@
         SetStorageFees(settings.storageFees);
         SetStorageProviders(settings.storage_providers);
         SetDownloads(settings.downloads);
-        SetPublicStorage(settings.storagePublic);
+        SetPublicStorage(settings.storagePublic, settings.allowDynamicFees);
         if(settings.remoteUploadEndpoint != undefined && settings.remoteUploadAccessToken != undefined) {
           SetRemoteUploadSettings(settings.remoteUploadEndpoint, settings.remoteUploadAccessToken);
         }

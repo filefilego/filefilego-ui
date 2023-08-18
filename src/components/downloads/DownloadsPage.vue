@@ -247,11 +247,15 @@
                         <tbody>
                             <tr v-for="r in responses" :key="r.public_key">
                                 <td style="">
-                                    <span v-if="r.fees_per_byte == '0x0' || isLessThan512KB(r)"
+                                    <span :uk-tooltip="isLessThan512KB(r) ? 'Files under 512KB are free': 'Free'" v-if="isFreeDownload(r) || isLessThan512KB(r)"
                                         style="background-color: rgb(62, 21, 202); line-height: 25px;"
                                         class="uk-badge">Free</span>
-                                    <span style="font-size: 0.9em; margin-top:5px; margin-left: 5px;">
-                                        {{ totalSPFees(totalSizeFromQueryResponse(r), r.fees_per_byte) }} FFG </span>
+                                    
+                                    
+                                    <span v-if="isFreeDownload(r) || isLessThan512KB(r)" style="font-size: 0.9em; margin-top:5px; margin-left: 5px;">
+                                        0 FFG </span>
+                                    <span v-else style="font-size: 0.9em; margin-top:5px; margin-left: 5px;">
+                                        {{ totalSPFees(r) }} FFG </span>
                                 </td>
                                 <td>
                                     <span style="font-size: 0.9em;"> {{ r.file_hashes.length }} / {{
@@ -472,6 +476,13 @@ export default {
 
     },
     methods: {
+        isFreeDownload(r) {
+            let allFree = true
+            r.file_fees_per_byte.forEach((o) => {
+                if(o != "0x0") allFree = false;
+            })
+            return allFree;
+        },
         isLessThan512KB(r){
             return r.file_hashes_sizes.filter((o) => o >= 512 * 1024).length == 0
         },
@@ -505,21 +516,19 @@ export default {
         calculateRequiredFees(providers) {
             try {
                 let total = new BigNumber(0, 10);
-                providers.filter((o) => {
-                    let totalFileSize = 0;
-                    o.file_hashes_sizes.filter((j) => {
-                        totalFileSize+= j;
+                providers.forEach((o, idx) => {
+                    o.file_fees_per_byte.forEach((j, feesIdx) => {
+                        let size = providers[idx].file_hashes_sizes[feesIdx]
+                        let valBig = new BigNumber(j, 16);
+                        let totalBytes = new BigNumber(size, 10);
+                        let totalFees = totalBytes.mul(valBig);
+                        total = total.plus(totalFees)
                     })
-                    let feesPerByte = new BigNumber(o.fees_per_byte, 16);
-                    let sizeBig = new BigNumber(totalFileSize, 10);
-                    let finalFeesWithoutVerificationFees = sizeBig.mul(feesPerByte)
-                    total = total.plus(finalFeesWithoutVerificationFees)
                 })
 
                 // add extra verification fee
                 let verificationFFG = Units.convert("0.08", "FFG", "FFGOne")
                 let verificationFFGOne = new BigNumber(verificationFFG, 10)
-                // console.log("verificationFFGOne" , verificationFFGOne.toString(10))
                 total = total.plus(verificationFFGOne);
 
                 return Units.convert(total.toString(10), "FFGOne", "FFG")
@@ -670,7 +679,7 @@ export default {
         },
         async download(r, destinationFolder = false) {
             this.downloadError = "";
-            if (r.fees_per_byte == "0x0" || this.isLessThan512KB(r)) {
+            if (this.isFreeDownload(r) || this.isLessThan512KB(r)) {
                 try {
                     let contracts = await this.createContract(this.dataQueryRequestHash, r.from_peer_addr)
                     if (contracts && contracts.length > 0) {
@@ -895,12 +904,17 @@ export default {
                 throw new Error(e.response.data.error);
             }
         },
-        totalSPFees(size, fees) {
+        totalSPFees(r) {
             try {
-                let totalBytes = new BigNumber(size, 10);
-                let valBig = new BigNumber(fees, 16);
-                let totalFees = totalBytes.mul(valBig);
-                return Units.convert(totalFees.toString(10), "FFGOne", "FFG")
+                let allFileFees = new BigNumber(0, 10);
+                r.file_fees_per_byte.forEach((o, idx) => {
+                    let size = r.file_hashes_sizes[idx]
+                    let valBig = new BigNumber(o, 16);
+                    let totalBytes = new BigNumber(size, 10);
+                    let totalFees = totalBytes.mul(valBig);
+                    allFileFees = allFileFees.plus(totalFees)
+                })
+                return Units.convert(allFileFees.toString(10), "FFGOne", "FFG")
             } catch (e) {
                 return e.message
             }
@@ -1003,7 +1017,7 @@ export default {
                     };
                     const response = await axios.post(localNodeEndpoint, data);
 
-                    response.data.result.responses.sort((a, b) => a.fees_per_byte != b.fees_per_byte && a.fees_per_byte == "0x0" ? -1 : 1);
+                    // response.data.result.responses.sort((a, b) => a.fees_per_byte != b.fees_per_byte && a.fees_per_byte == "0x0" ? -1 : 1);
                     this.responses = response.data.result.responses;
 
                 }, 1000)

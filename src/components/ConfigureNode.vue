@@ -101,7 +101,28 @@
               </div>
           </div>
 
-          <div v-if="node_type == 'storage'" style="margin-top:20px;" class="uk-grid-match uk-child-width-expand@s uk-text-center" uk-grid>    
+          <div v-if="node_type == 'storage'" style="margin-top:20px;" class="uk-grid-match uk-child-width-expand@s uk-text-center" uk-grid> 
+            <div>
+                  <div class="uk-card uk-card-default uk-card-body">
+                    <div style="margin-top:10px; padding:20px;">
+                      <span style="background-color: rgb(62, 21, 202);" class="uk-badge">3</span> <br />
+                      <span class="uk-text-default" style="color:#000; font-weight: 500;">
+                        Do you want to allow user-defined dynamic fees on this computer?
+                      </span>
+                      <br />
+                      <div style="margin-top:6px;">
+                        <label style="font-weight: 500; color:#000;"><input v-model="allowDynamicFees" class="uk-checkbox" type="checkbox" checked> Yes</label>
+                      </div>
+                    </div>
+
+                    <div style="margin-top:10px;">
+                        <span class="normal-txt">
+                          If enabled, users will be allowed to set the fees for the uploaded data on this computer.
+                        </span>
+                      </div>
+
+                  </div>
+              </div>   
               <div>
                   <div class="uk-card uk-card-default uk-card-body">
                     <div style="margin-top:10px; padding:20px;">
@@ -145,11 +166,11 @@
                       </div>
                       </div>
 
-                      <div class="uk-text-truncate" style="margin-top:10px;">
+                      <div style="margin-top:10px;">
                         <span class="normal-txt">
-                          You will charge {{ storageFeesCalculatedGB  }} FFG for 1 GB file
+                          You will charge {{ storageFeesCalculatedGB  }} FFG for 1 GB file.
                         </span>
-                        <br />
+                        <br /><br />
                         <span v-if="errorMsg!= ''" style="color:red;"> {{ errorMsg }}</span>
                         <br v-if="errorMsg!= ''" />
                         <span class="normal-txt">
@@ -196,6 +217,7 @@
         storageAccessToken: "",
         storageFees: "",
         storagePublic: false,
+        allowDynamicFees: false,
         storageFeesCalculatedGB: "",
         errorMsg: ""
       }
@@ -320,7 +342,8 @@
             storageAccessToken: this.storageAccessToken,
             storageFees: this.storageFees,
             storagePublic: this.storagePublic,
-            storage_providers: []
+            storage_providers: [],
+            allowDynamicFees: this.allowDynamicFees
           }
 
           const saveRes = ipcRenderer.sendSync("save-settings", nodeSettings);

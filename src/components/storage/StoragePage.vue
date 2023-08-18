@@ -32,6 +32,20 @@
                 </div>
                 <div class="uk-navbar-right">
                     <ul class="uk-navbar-nav">
+                        <!-- <li>
+                            <button style="text-transform: none; border-radius: 3px; border:1px solid #ababab;" class="uk-button uk-button-default" type="button">
+                                Settings
+                                <span class="uk-icon" uk-icon="icon: cog"></span>
+                            </button>
+                            <div style="padding: 14px;" uk-dropdown="mode: click">
+                                <ul class="uk-nav uk-dropdown-nav">
+                                    <li><a style="color:#4e4e4e;" @click="importUploadedFiles()">
+                                        <span class="uk-icon" uk-icon="icon: pull"></span>
+                                        Set Global
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </li> -->
                         <li>
                             <button style="text-transform: none; border-radius: 3px; border:1px solid #ababab;" class="uk-button uk-button-default" type="button">
                                 Add Provider
@@ -63,8 +77,9 @@
                         <thead>
                             <tr>
                                 <th style="text-transform: none; width:20px;"><span style="color:#000;"> # </span></th>
-                                <th style="text-transform: none; width:120px;"><span style="color:#000;"> Type </span></th>
+                                <th style="text-transform: none; width:30px;"><span style="color:#000;"> Type </span></th>
                                 <th style="text-transform: none;"><span style="color:#000;"> Peer ID </span></th>
+                                <th style="text-transform: none; width:100px;"> <span style="color:#000;">  Dynamic Fees </span></th>
                                 <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Space </span></th>
                                 <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Uptime </span></th>
                                 <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Info </span></th>
@@ -75,11 +90,18 @@
                         <tbody>
                             <tr style="" v-for="p in providers" :key="p.public_key">
                                 <td>
-                                    <span uk-tooltip="Save peer" v-if="!isSelected(p)"  :class="isSelected(p) ? 'uk-button-selected' : ''" @click="saveStoragePeer(p)" style="cursor: pointer;" class="uk-icon-button uk-margin-small-right" uk-icon="star"></span>
-                                    <span uk-tooltip="Remove peer" v-else :class="isSelected(p) ? 'uk-button-selected' : ''" @click="removeStoragePeer(p)" style="cursor: pointer;" class="uk-icon-button uk-margin-small-right" uk-icon="star"></span>
+                                    <span uk-tooltip="Save peer" v-if="!isSelected(p)"  :class="isSelected(p) ? 'uk-button-selected' : ''" @click="saveStoragePeer(p)" style="border:1px solid #ababab; cursor: pointer;" class="uk-icon-button uk-margin-small-right" uk-icon="plus"></span>
+                                    <span uk-tooltip="Remove peer" v-else :class="isSelected(p) ? '' : ''" @click="removeStoragePeer(p)" style="border:1px solid #ababab; cursor: pointer; color:red;" class="uk-icon-button uk-margin-small-right" uk-icon="close"></span>
                                 </td>
-                                <td class="normal-txt">{{ p.access_type == "public_storage" ? "Public Storage" : "Access Token" }}</td>
-                                <td class="normal-txt uk-text-truncate">{{ p.storage_provider_peer_addr }}</td>
+                                <td class="normal-txt">
+                                    <span uk-tooltip="Public Storage" v-if="p.access_type == 'public_storage'" uk-icon="world"></span>
+                                    <span uk-tooltip="Storage Access Token" v-if="p.access_type == 'access_token'" uk-icon="unlock"></span>
+                                </td>
+                                <td class="normal-txt uk-text-truncate">{{ p.alias != undefined && p.alias != '' ? p.alias : p.storage_provider_peer_addr }}</td>
+                                <td style="text-align: center;" class="normal-txt">
+                                    <span v-if="p.allow_fees_override != undefined && p.allow_fees_override" uk-tooltip="You can set fees for the data" uk-icon="check"></span>
+                                    <span v-else uk-tooltip="Dynamic Fees Disabled on Node" uk-icon="close"></span>
+                                </td>
                                 <td class="normal-txt">
                                     {{ $filters.formatsize(p.storage_capacity) }}
                                 </td>
@@ -152,13 +174,19 @@
                 <div style="padding: 10px; margin-top:10px;">
                     <div style=" width:100%;" class="uk-inline">
                         <span style="color: #000;" class="uk-form-icon" uk-icon="icon: world"></span>
-                        <input v-model="storageEndpoint" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="HTTP Endpoint" aria-label="Input">
+                        <input v-model="storageEndpoint" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="HTTP Endpoint (e.g. http://ipaddress:8090/)" aria-label="Input">
+                    </div>
+                </div>
+                <div style="padding: 10px; margin-top:5px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: lock"></span>
+                        <input v-model="storageAccessToken" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="Storage Access Token" aria-label="Input">
                     </div>
                 </div>
                 <div style="padding: 10px; margin-top:5px;">
                     <div style=" width:100%;" class="uk-inline">
                         <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
-                        <input v-model="storageAccessToken" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="Storage Access Token" aria-label="Input">
+                        <input v-model="storageName" style="width:100%; border-radius: 4px;" class="uk-input normal-txt" type="text" placeholder="Name (e.g. My Storage Node)" aria-label="Input">
                     </div>
                 </div>
                 
@@ -196,7 +224,8 @@ export default {
         return {
             addingProvider: false,
             addProviderError: "",
-            storageEndpoint: "http://node1storage.local:8090",
+            storageEndpoint: "",
+            storageName: "",
             storageAccessToken: "",
             speedTestErrors: {},
             loadingSpeedTest: {},
@@ -260,8 +289,8 @@ export default {
                     this.addProviderError = "Invalid endpoint";
                     return
                 }
+
                 let response = await axios.post(endPoint.baseUrl + "/storage/introspect", {}, { headers })
-                
                 let remoteNodeWithAccess = response.data;
                 remoteNodeWithAccess.access_type = "access_token"
                 remoteNodeWithAccess.location = "";
@@ -269,6 +298,8 @@ export default {
                 remoteNodeWithAccess.signature = "";
                 remoteNodeWithAccess.country = {};
                 remoteNodeWithAccess.http_upload_endpoint = endPoint.baseUrl;
+                remoteNodeWithAccess.alias = this.storageName;
+                remoteNodeWithAccess.allow_fees_override = remoteNodeWithAccess.access_token.access_type == "admin" || remoteNodeWithAccess.allow_fees_override
 
                 let isDupe = false;
                 this.providers.forEach(obj => {
@@ -313,7 +344,7 @@ export default {
         isSelected(p) {
             const sp = ref(globalState.storage_providers);
             if (sp.value != undefined && sp.value.length > 0) {
-                return sp.value.filter((o) => o.storage_provider_peer_addr == p.storage_provider_peer_addr).length > 0
+                return sp.value.filter((o) => o.storage_provider_peer_addr == p.storage_provider_peer_addr && o.access_type == p.access_type ).length > 0
             }
             return false;
         },
@@ -357,7 +388,7 @@ export default {
             }
         },
         removeStoragePeer(p) {
-            RemoveStorageProviders(p.storage_provider_peer_addr);
+            RemoveStorageProviders(p.storage_provider_peer_addr, p.access_type);
             const s = ref(globalState.storage_providers);
             let all = [...s.value];
             const saveRes = ipcRenderer.sendSync("save-storage-providers", JSON.parse(JSON.stringify(all)));

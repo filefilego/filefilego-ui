@@ -278,6 +278,7 @@ ipcMain.on("run-ffg", (evt, arg) => {
       args.push("--storage")
       args.push("--show_storage_capacity")
       args.push(`--storage_dir=${settings.storageFolder}`)
+      args.push(`--allow_fees_override=${settings.allowDynamicFees}`)
       args.push(`--storage_token=${settings.storageAccessToken}`)
       args.push(`--storage_fees_byte=${feesBigVal.toString(10)}`)
 

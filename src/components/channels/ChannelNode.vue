@@ -1436,7 +1436,6 @@ export default {
                 
                 paginator.paginate({ rows: this.node.nodes, count: res.total_child_nodes - subChannLength });
                 let pl = paginator.payload();
-                console.log("pl" , pl)
                 this.pagination = { ...pl };
             } catch (e) {
                 // this.loadingChannelError = true;

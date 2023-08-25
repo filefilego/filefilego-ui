@@ -182,49 +182,58 @@
             <div v-if="selectedStorageProviderPeerIDForUpload == null" style="text-align: center; padding-bottom: 10px;">
                 <span class="normal-txt" style="font-weight: 500;"> Select a storage provider from your saved list to upload data to:</span>
             </div>
-            <div v-if="selectedStorageProviderPeerIDForUpload == null" style="max-height:500px; overflow-y:auto;">
-                <table v-if="providers.length > 0" id="storage-providers" class="uk-table uk-table-striped uk-table-middle uk-table-justify">
-                    <thead>
-                        <tr class="tr-heeader">
-                            <th style="text-transform: none; width:30px;"><span style="color:#000;"> Type </span></th>
-                            <th style="text-transform: none;"><span style="color:#000;"> Peer ID </span></th>
-                            <th style="text-transform: none; width:100px;"> <span style="color:#000;">  Dynamic Fees </span></th>
-                            <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Space </span></th>
-                            <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Uptime </span></th>
-                            <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Country </span></th>
-                            <th style="text-transform: none; width:180px;"> <span style="color:#000;"> Fees per byte </span> </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr @click="selectSP(p)" style="" v-for="p in providers" :key="p.public_key">
-                            <td style="text-align: center;" class="uk-text-truncate">
-                                <span uk-tooltip="Public Storage" v-if="p.access_type == 'public_storage'" uk-icon="world"></span>
-                                <span uk-tooltip="Storage Access Token" v-if="p.access_type == 'access_token'" uk-icon="unlock"></span>
-                            </td>
-                            <td class="uk-text-truncate">{{ p.alias != undefined && p.alias != '' ? p.alias : p.storage_provider_peer_addr }}</td>
-                            <td style="text-align: center;" class="normal-txt">
-                                    <span v-if="p.allow_fees_override != undefined && p.allow_fees_override" uk-tooltip="You can set fees for the data" uk-icon="check"></span>
-                                    <span v-else uk-tooltip="Dynamic Fees Disabled on Node" uk-icon="close"></span>
+            <div v-if="selectedStorageProviderPeerIDForUpload == null">
+                <div style="max-height:500px; overflow-y:auto;">
+                    <table v-if="providers.length > 0" id="storage-providers" class="uk-table uk-table-striped uk-table-middle uk-table-justify">
+                        <thead>
+                            <tr class="tr-heeader">
+                                <th style="text-transform: none; width:30px;"><span style="color:#000;"> Type </span></th>
+                                <th style="text-transform: none;"><span style="color:#000;"> Peer ID </span></th>
+                                <th style="text-transform: none; width:100px;"> <span style="color:#000;">  Dynamic Fees </span></th>
+                                <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Space </span></th>
+                                <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Uptime </span></th>
+                                <th style="text-transform: none; width:40px;"> <span style="color:#000;"> Country </span></th>
+                                <th style="text-transform: none; width:180px;"> <span style="color:#000;"> Fees per byte </span> </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr @click="selectSP(p)" style="" v-for="p in providers" :key="p.public_key">
+                                <td style="text-align: center;" class="uk-text-truncate">
+                                    <span uk-tooltip="Public Storage" v-if="p.access_type == 'public_storage'" uk-icon="world"></span>
+                                    <span uk-tooltip="Storage Access Token" v-if="p.access_type == 'access_token'" uk-icon="unlock"></span>
                                 </td>
-                            <td>
-                                {{ $filters.formatsize(p.storage_capacity) }}
-                            </td>
-                            <td>
-                                {{ secondsToHours(p.uptime_seconds) }}
-                            </td>
-                            <td style="text-align: center;">
-                                <span v-if="getCountry(p) == '' || getCountry(p) == 'fi-'">
-                                    N/A</span>
-                                <span v-else :class="getCountry(p)" class="fi"></span>
-                            </td>
-                            <td>{{ getFees(p.fees_per_byte) }} FFG</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div style="text-align: center; margin-top:10px;" v-else>
-                    <span style="color: #000;">
-                        We're sorry, but it seems like there are no storage providers in your selected list. Please visit the <router-link to="/storage"> "Storage Providers" </router-link> section to explore and find suitable providers. Tap the star icon to add them to your list, and you'll be able to see them here.
-                    </span>
+                                <td class="uk-text-truncate">{{ p.alias != undefined && p.alias != '' ? p.alias : p.storage_provider_peer_addr }}</td>
+                                <td style="text-align: center;" class="normal-txt">
+                                        <span v-if="p.allow_fees_override != undefined && p.allow_fees_override" uk-tooltip="You can set fees for the data" uk-icon="check"></span>
+                                        <span v-else uk-tooltip="Dynamic Fees Disabled on Node" uk-icon="close"></span>
+                                    </td>
+                                <td>
+                                    {{ $filters.formatsize(p.storage_capacity) }}
+                                </td>
+                                <td>
+                                    {{ secondsToHours(p.uptime_seconds) }}
+                                </td>
+                                <td style="text-align: center;">
+                                    <span v-if="getCountry(p) == '' || getCountry(p) == 'fi-'">
+                                        N/A</span>
+                                    <span v-else :class="getCountry(p)" class="fi"></span>
+                                </td>
+                                <td>{{ getFees(p.fees_per_byte) }} FFG</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="text-align: center; margin-top:10px;" v-else>
+                        <span style="color: #000;">
+                            We're sorry, but it seems like there are no storage providers in your selected list. Please visit the <router-link to="/storage"> "Storage Providers" </router-link> section to explore and find suitable providers. Tap the star icon to add them to your list, and you'll be able to see them here.
+                        </span>
+                    </div>
+                </div>
+
+                <div v-if="selectStorageProviderLoading" style="text-align: center;">
+                    Please wait <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                </div>
+                <div v-if="selectStorageProviderError != ''" style="text-align: center;">
+                   <span uk-icon="icon:warning; ratio:0.9;" style="vertical-align:middle; color:red;"></span> <span style="vertical-align:middle; color:red;"> {{ selectStorageProviderError }} </span>
                 </div>
             </div>
 
@@ -458,6 +467,8 @@ export default {
     props: ["parent", "place", "callback", "accept", "uploadmedia", "maxsize", "maxfiles"],
     data() {
         return {
+            selectStorageProviderLoading: false,
+            selectStorageProviderError: "",
             filesOwnerPublicKey: "",
             loadingIntervalProgressBarNetworkUploads: null,
             selectedStorageProviderPeerIDForUpload: null,
@@ -583,6 +594,23 @@ export default {
         }
     },
     methods: {
+        async perfromSpeedTest(storage_provider_peer_addr) {           
+            const data = {
+                jsonrpc: '2.0',
+                method: "storage.TestSpeedWithRemotePeer",
+                params: [{ peer_id: storage_provider_peer_addr, file_size: 1 }],
+                id: 1
+            };
+
+            return await axios.post(localNodeEndpoint, data);
+        },
+        async introspectToken(endpoint, storageAccessToken) {
+            const headers = {
+                    'Authorization': storageAccessToken,
+                    'Content-Type': 'application/json'
+            };
+            return await axios.post(endpoint + "/storage/introspect", {}, { headers })
+        },
         setFeeWasClicked(idx) {
             let res = this.clickedSetButton[idx]
             if(!res || res == undefined) return false;
@@ -841,6 +869,7 @@ export default {
             }
         },
         goBackNetwork() {
+            this.selectStorageProviderError = ""
             if(this.uploadData.length > 0) {
                 const userConfirmed = confirm("Are you sure you want to cancel the current operations?");
                 if (!userConfirmed) {
@@ -855,8 +884,32 @@ export default {
             }
             ClearItemsFromUpload();
         },
-        selectSP(p) {
-            this.selectedStorageProviderPeerIDForUpload = p;
+        async selectSP(p) {
+            this.selectStorageProviderError = ""
+            this.selectStorageProviderLoading = true;
+            try {
+                if(p.access_type == "public_storage") {
+                    // perform speedtest with 1 byte
+                    await this.perfromSpeedTest(p.storage_provider_peer_addr);
+                } else {
+                    // introspect with access token
+                    await this.introspectToken(p.http_upload_endpoint, p.access_token.token);
+                }
+                this.selectedStorageProviderPeerIDForUpload = p;
+            } catch (e) {
+                if(e.code == "ERR_BAD_REQUEST") {
+                    if(e.response.data.error == "failed to get value: leveldb: not found") {
+                        this.selectStorageProviderError = "Invalid storage access token"
+                    } else {
+                        this.selectStorageProviderError = "Failed to connect to the storage provider. Storage provider might be offline or behind NAT"
+                    }
+                } else {
+                    this.selectStorageProviderError = "Failed to connect to the storage provider. Storage provider might be offline or behind NAT"
+                }
+            } finally {
+                this.selectStorageProviderLoading = false;
+            }
+            
         },
         getFees(feesBig) {
             try {

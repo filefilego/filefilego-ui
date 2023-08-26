@@ -127,7 +127,18 @@
                     <div v-if="validateNameError != ''" style="margin-top:10px;">
                         <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;" uk-icon="icon: warning;"></span> {{ validateNameError }} </span>
                     </div>
-
+                </div>
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: bolt"></span>
+                        <input v-model="admins" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="Additional Admins (comma separated addresses)" aria-label="Input">
+                    </div>
+                </div>
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: users"></span>
+                        <input v-model="posters" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="Posters (comma separated addresses)" aria-label="Input">
+                    </div>
                 </div>
                 <div style="padding: 10px; margin-top:5px;">
                     <div style="width:100%;" class="uk-inline">
@@ -183,6 +194,8 @@ export default {
     },
     data() {
         return {
+            admins: "",
+            posters: "",
             pagination: {},
             channelCreated: true,
             lastTXSent: "",
@@ -311,6 +324,10 @@ export default {
                     return;
                 }
 
+                let admins = this.admins.split(',').filter((o) => o && o!= "" && o.length == 42)
+                
+                let posters = this.posters.split(',').filter((o) => o && o!= "" && o.length == 42)
+
                 if(this.name == "") {
                     this.validateNameError = "Channel name is required";
                     return;
@@ -332,7 +349,7 @@ export default {
                 const data = {
                     jsonrpc: '2.0',
                     method: "channel.CreateNodeItemsTxDataPayload",
-                    params: [{ nodes: [{ enabled: true, name: this.name, description: this.description, node_type: 1, timestamp: Math.floor(Date.now() / 1000) }] }],
+                    params: [{ nodes: [{ admins: admins, posters: posters, enabled: true, name: this.name, description: this.description, node_type: 1, timestamp: Math.floor(Date.now() / 1000) }] }],
                     id: 1
                 };
     
@@ -365,6 +382,8 @@ export default {
                     if(res.transactions && res.transactions.length > 0) {
                         this.channelCreated = true;  
                         this.creatingChannel = false;
+                        this.admins = ""
+                        this.posters = ""
                         clearInterval(loadTxInterval);
                         await this.reload()
                         this.closeCreateChannelModal();

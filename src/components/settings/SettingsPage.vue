@@ -62,7 +62,7 @@
                 Directory</label>
               <div class="uk-form-controls">
                 <input readonly v-model="storageDir" class="uk-input uk-form-width-large normal-txt" id="form-horizontal-text"
-                  type="text" placeholder="Downloads Directory">
+                  type="text" placeholder="Storage Directory">
                 <button @click="chooseDir('storageDir')" class="uk-button ffg-button" style="width:150px; height:40px; ">
                   Change
                   <span class="uk-icon" uk-icon="icon: folder"></span>

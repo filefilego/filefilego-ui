@@ -101,29 +101,28 @@
                     </h4>
                 </div>
                 <div class="k-width-expand uk-text-right">
-                    <div v-show="canCreate && node.node_type < 5">
+                    <div v-show="getPermission() != 'guest'">
                         <div>
                             <button class="uk-button ffg-button" style="width:150px; height:40px; ">
                                 New
                                 <span class="uk-icon" uk-icon="icon: plus"></span>
                             </button>
-
                             <div @click="hideNav" id="new_dropdown"
                                 style="background-color:white; border:1px solid #e3e3e3; text-align: left;"
                                 uk-dropdown="mode: click; delay-hide:0;">
                                 <ul style="padding:0px; margin:0px;" class="chan-action-ul uk-list">
-                                    <li v-if="node.node_type == 1 || node.node_type == 2" @click="openCreateSubChannelModal"
+                                    <li v-if="getPermission() == 'admin' && (node.node_type == 1 || node.node_type == 2)" @click="openCreateSubChannelModal"
                                         class="clickable">
                                         <span uk-icon="icon:thumbnails;"></span> Subchannel
                                     </li>
-                                    <li v-if="node.node_type == 1 || node.node_type == 2" @click="openEntryModal"
+                                    <li v-if="getPermission() != 'guest' && (node.node_type == 1 || node.node_type == 2)" @click="openEntryModal"
                                         class="clickable">
                                         <span uk-icon="icon:pencil;"></span> Entry
                                     </li>
-                                    <li @click="openNewFolderModal" class="clickable">
+                                    <li v-if="getPermission() != 'guest'" @click="openNewFolderModal" class="clickable">
                                         <span uk-icon="icon:folder;"></span> Folder
                                     </li>
-                                    <li v-if="node.node_type < 5" @click="openUploadModal" class="clickable">
+                                    <li v-if="getPermission() != 'guest' && node.node_type < 5" @click="openUploadModal" class="clickable">
                                         <span uk-icon="icon:upload;"></span> Upload
                                     </li>
                                 </ul>
@@ -176,8 +175,7 @@
                     </div>
                     <div v-else style="text-align:left; text-transform: none;">
                         <div v-if="node.node_type == 1 || node.node_type == 2">
-                            <div
-                                style="text-align: center; background-color: rgb(245, 245, 245); padding:20px; border-top: 1px solid rgb(234, 234, 234);">
+                            <div style="text-align: center; background-color: rgb(245, 245, 245); padding:20px; border-top: 1px solid rgb(234, 234, 234);">
                                 <div
                                     style=" background-color: #3e15ca; margin: 0px auto;width: 64px;font-weight: 600;color: white;font-size: 2.5em;text-align: center;border-radius: 50%;height: 64px; ">
                                     <span style="display:inline-block; margin-top:2px;"> {{
@@ -930,6 +928,7 @@ export default {
             createSubChannelError: "",
             creatingSubChannel: false,
             node: { name: "", node_type: 0, node_hash: "", nodes: [], owner: "" },
+            root_node: { name: "", node_type: 0, node_hash: "", nodes: [], owner: "" },
             loadingNode: false,
             page_size: "100",
             nodeAddress: "",
@@ -946,9 +945,6 @@ export default {
         }
     },
     computed: {
-        canCreate() {
-            return this.node.owner == this.nodeAddress;
-        },
         entryMode() {
             const mode = ref(globalState.entryCreationMode);
             return mode.value
@@ -1005,6 +1001,27 @@ export default {
         await this.loadMedia()
     },
     methods: {
+        getPermission() {
+            if(this.root_node.owner == this.nodeAddress) {
+                return "admin";
+            }
+
+            if(this.root_node.admins && this.root_node.admins.length > 0) {
+                if(this.root_node.admins.filter((o) => o == this.nodeAddress).length > 0) {
+                    return "admin"
+                }
+            }
+            if(this.node.node_type == 1) {
+                this.root_node = this.node;
+            }
+            if(this.root_node.posters && this.root_node.posters.length > 0) {
+                if(this.root_node.posters.filter((o) => o == this.nodeAddress).length > 0) {
+                    return "poster"
+                }
+            }
+
+            return "guest"
+        },
         hexToBytes(hex) {
             const bytes = new Uint8Array(hex.length / 2);
             for (let i = 0; i < hex.length; i += 2) {
@@ -1427,6 +1444,7 @@ export default {
                     this.otherChannelNodes = otherEntries;
 
                     this.node = res.node;
+                    this.root_node = res.root;
                 }
 
                 let subChannLength = this.subchannels.length

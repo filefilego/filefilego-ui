@@ -915,6 +915,28 @@ export default {
                         ["clean"], // remove formatting button
                     ],
                 },
+                formats: [
+                    'background',
+                    'bold',
+                    'color',
+                    'font',
+                    'code',
+                    'italic',
+                    'link',
+                    'size',
+                    'strike',
+                    'underline',
+                    'blockquote',
+                    'header',
+                    'indent',
+                    'list',
+                    'align',
+                    'direction',
+                    'code-block',
+                    'formula'
+                    // 'image'
+                    // 'video'
+                ]
             },
             entry_content: "",
             subchannels: [],
@@ -1002,19 +1024,21 @@ export default {
     },
     methods: {
         getPermission() {
-            if(this.root_node.owner == this.nodeAddress) {
+            if(this.root_node && this.root_node.owner == this.nodeAddress) {
                 return "admin";
             }
 
-            if(this.root_node.admins && this.root_node.admins.length > 0) {
+            if(this.root_node && this.root_node.admins && this.root_node.admins.length > 0) {
                 if(this.root_node.admins.filter((o) => o == this.nodeAddress).length > 0) {
                     return "admin"
                 }
             }
+            
             if(this.node.node_type == 1) {
                 this.root_node = this.node;
             }
-            if(this.root_node.posters && this.root_node.posters.length > 0) {
+
+            if(this.root_node && this.root_node.posters && this.root_node.posters.length > 0) {
                 if(this.root_node.posters.filter((o) => o == this.nodeAddress).length > 0) {
                     return "poster"
                 }

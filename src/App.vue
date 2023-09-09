@@ -141,6 +141,19 @@ body :not(input) {
     color: white;
 }
 
+.ffg-button-danger {
+    background-color: #ff5757;
+    color: white;
+    border-radius: 3px;
+    text-transform: none;
+    font-weight: 600;
+}
+
+.ffg-button-danger:hover {
+    background-color: #ff3737;
+    color: white;
+}
+
 .area {
     background: #4e54c8;
     /* background: -webkit-linear-gradient(to left, #8f94fb, #4e54c8); */
@@ -309,6 +322,14 @@ body :not(input) {
     font-weight: 700;
     font-size: 1.5rem;
 
+}
+
+.truncate-one-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
 }
 
 </style>

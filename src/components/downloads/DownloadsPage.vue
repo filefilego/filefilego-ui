@@ -269,11 +269,20 @@
                                     <span uk-tooltip="Some files are not available on this provider"
                                         v-if="r.unavailable_file_hashes.length > 0" class="uk-text-small uk-text-danger">
                                         <span style="margin-right:5px;" uk-icon="icon: warning;"></span> </span>
-                                    <button @click="download(r)" class="uk-button ffg-button"
-                                        style=" text-transform: none; padding:0; width:140px; height: 40px;">
-                                        Download
-                                        <span class="uk-icon" uk-icon="icon: download"></span>
-                                    </button>
+                                    
+                                        <div style="padding-right: 4px;" v-if="speedTestError(r.from_peer_addr) != ''" class="uk-inline">
+                                            <span uk-icon="icon: warning" style="color:red; cursor: pointer;"> </span>
+                                            <div style="color: #c50000; font-size: 0.9em;" uk-dropdown="delay-hide:1;">
+                                                {{speedTestError(r.from_peer_addr)}}
+                                            </div>
+                                        </div>
+                                        <span v-if="getSpeedTestLoading(r.from_peer_addr)" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+
+                                        <button v-else @click="download(r)" class="uk-button ffg-button"
+                                            style=" text-transform: none; padding:0; width:140px; height: 40px;">
+                                            Download
+                                            <span class="uk-icon" uk-icon="icon: download"></span>
+                                        </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -380,13 +389,6 @@
                         </tbody>
                     </table>
                 </div>
-                <!-- <div style="padding: 10px; margin-top:5px; text-align: center;">
-                    <button @click="searchNetwork" class="uk-button ffg-button"
-                        style="font-weight: bold; text-transform: none; width:180px; height: 40px;">
-                        Search
-                        <span class="uk-icon" uk-icon="icon: search"></span>
-                    </button>
-                </div> -->
             </div>
         </div>
 
@@ -399,10 +401,6 @@ const { ipcRenderer } = window.require("electron");
 import axios from 'axios';
 import { globalState, AddToDownloads, RemoveItemFromDownloads, PauseDownload, ResumeDownloads, RestartDownload} from '../../store';
 import { ref } from 'vue';
-// import { callJsonRpc2Endpoint } from '../rpc'
-// import numberToBN from "number-to-bn";
-// import Pagination from "../pagination.js";
-// import PaginationBar from "./PaginationBar.vue"
 import { Units } from "../../unit.js"
 import BigNumber from 'bignumber.js';
 import ftype from "../../filetype";
@@ -414,6 +412,8 @@ export default {
     },
     data() {
         return {
+            speedTestErrors: {},
+            loadingSpeedTest: {},
             usedTransactionFeeForContractCreation: "0.001",
             downloadConfirmLoading: false,
             downloadConfirmLoadingMessage: "",
@@ -677,8 +677,52 @@ export default {
                 throw new Error(e.response.data.error);
             }
         },
+        speedTestError(storage_provider_peer_addr) {
+            if(this.speedTestErrors[storage_provider_peer_addr] !== undefined) {
+                if(this.speedTestErrors[storage_provider_peer_addr].includes("no addresses")) {
+                    return "Storage provider seems to be offline";
+                }
+
+                if(this.speedTestErrors[storage_provider_peer_addr].includes("timeout") || this.speedTestErrors[storage_provider_peer_addr].includes("backoff")) {
+                    return "Storage provider connection timeout";
+                }
+
+                return this.speedTestErrors[storage_provider_peer_addr]
+            }
+            return "";
+        },
+        getSpeedTestLoading(storage_provider_peer_addr) {
+            if(this.loadingSpeedTest[storage_provider_peer_addr] !== undefined) {
+                return this.loadingSpeedTest[storage_provider_peer_addr].loading;
+            }
+            return false;
+        },
+        async perfromSpeedTest(storage_provider_peer_addr) {
+            try {
+                delete this.speedTestErrors[storage_provider_peer_addr];
+                this.loadingSpeedTest[storage_provider_peer_addr] = { loading: true }
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "storage.TestSpeedWithRemotePeer",
+                    params: [{ peer_id: storage_provider_peer_addr, file_size: 1 }],
+                    id: 1
+                };
+
+                let response = await axios.post(localNodeEndpoint, data);
+                return response.data.result.download_throughput_mb;
+            } catch (e) {
+                this.speedTestErrors[storage_provider_peer_addr] = e.response.data.error
+                return false;
+            } finally {
+                this.loadingSpeedTest[storage_provider_peer_addr] = { loading: false }
+            }
+        },
         async download(r, destinationFolder = false) {
             this.downloadError = "";
+            // perform a speed test first
+            let speedTestRes = await this.perfromSpeedTest(r.from_peer_addr)
+            if(!speedTestRes) return;
+
             if (this.isFreeDownload(r) || this.isLessThan512KB(r)) {
                 try {
                     let contracts = await this.createContract(this.dataQueryRequestHash, r.from_peer_addr)

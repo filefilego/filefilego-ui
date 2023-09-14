@@ -263,7 +263,7 @@
                 <div style="padding: 10px; margin-top:10px;">
                     <div style="width:100%;" class="uk-inline">
                         <span class="uk-form-icon" uk-icon="icon: world"></span>
-                        <input v-model="nodeAddress" style="width:100%; border-radius: 4px;" class="uk-input normal-txt" type="text" placeholder="Your Address" aria-label="Input">
+                        <input readonly v-model="nodeAddress" style="width:100%; border-radius: 4px;" class="uk-input normal-txt" type="text" placeholder="Your Address" aria-label="Input">
                     </div>
                 </div>
                 <div style="padding: 10px; margin-top:10px;">

@@ -1,92 +1,197 @@
 <template>
     <div id="node-container"
         style="margin: 0px 10px; border: 1px solid rgb(234, 234, 234); background-color: rgb(255, 255, 255);">
-        <div v-if="entryMode">
-            <div style="padding-left: 15px; padding-bottom: 15px; padding-top: 15px; padding-right: 15px;"
-                class="uk-grid-match" uk-grid>
-                <div class="uk-width-expand">
-                    <h4 class="modal-header" style="margin-top:10px;">
-                        Create entry under: <b style="color:#1e87f0;"> {{ node.name }} </b>
-                    </h4>
-                </div>
-                <div class="k-width-expand uk-text-right">
-                    <div>
+        <div v-if="entryMode || updateEntryMode">
+            <div v-if="updateEntryMode && tmpEntry != null">
+                <div style="padding-left: 15px; padding-bottom: 15px; padding-top: 15px; padding-right: 15px;"
+                    class="uk-grid-match" uk-grid>
+                    <div class="uk-width-expand">
+                        <h4 class="modal-header" style="margin-top:10px;">
+                            Update entry
+                        </h4>
+                    </div>
+                    <div class="k-width-expand uk-text-right">
+                        <div>
 
+                        </div>
+                    </div>
+                </div>
+                <div style="padding-left: 15px; padding-bottom: 15px; padding-right: 15px;">
+                    <span class="normal-txt" style="margin-top:10px;">
+                        Name:
+                    </span>
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
+                        <input v-model="tmpEntry.name" style="width:100%; border-radius: 4px;" class="uk-input normal-txt"
+                            type="text" placeholder="Entry Name" aria-label="Input">
+
+
+                    </div>
+                    <div v-if="validateEntryNameError != ''" style="">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                uk-icon="icon: warning;"></span> {{ validateEntryNameError }} </span>
+                    </div>
+
+                    <div style="margin-top:10px;">
+                        <span class="normal-txt" style="margin-top:10px;">
+                            Description:
+                        </span>
+
+                        <QuillEditor style="height:300px;" contentType="html" v-model:content="tmpEntry.description"
+                            :options="toolbarOptions" theme="snow" />
+
+                        <div v-if="createEntryError != ''" style="margin-top:10px;">
+                            <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                    uk-icon="icon: warning;"></span> {{ createEntryError }} </span>
+                        </div>
+
+                        <h2 class="modal-header">Upload media cover image or screenshots (First image is the cover)</h2>
+
+                        <ul id="mediaviewerupdate" v-if="mediaFiles.length > 0"
+                            class="uk-grid-small uk-child-width-1-2 uk-child-width-1-4@s"
+                            uk-sortable="handle: .uk-sortable-handle" uk-grid>
+                            <li :key="m.file_hash" v-for="(m, idx) in mediaFiles">
+                                <div style="padding:4px;" class="uk-card uk-card-default uk-card-body uk-text-center">
+                                    <img style="max-height: 200px; max-width: 200px;" :data-hash="m.file_hash"
+                                        :src="m.previewURL" />
+                                    <div style="text-align: center;">
+                                        <span uk-tooltip="Move" class="uk-sortable-handle uk-margin-small-right uk-text-center"
+                                            uk-icon="icon: table"></span>
+                                        <span @click="removeMedia(idx)" uk-tooltip="Delete" style="color:red; cursor: pointer;"
+                                            uk-icon="close">
+                                        </span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+
+                        <div v-if=loadingMediaFilesInEntryUpdate>
+                            <div style="text-align:center; margin-top:10px;">
+                                loading media files <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                            </div>
+                        </div>
+
+                        <div v-show="mediaFiles.length < 5" style="margin-top:14px;">
+                            <button @click="openUploadMediaModal" class="uk-button ffg-button"
+                                style="width:150px; height:40px; ">
+                                Add
+                                <span class="uk-icon" uk-icon="icon: image"></span>
+                            </button>
+                        </div>
+
+                        <div style="text-align:center; margin-top:10px;" v-if="creatingEntry">
+                            <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                        </div>
+
+                        <div v-if="!creatingEntry" style="margin-top:10px; text-align: center;">
+                            <button @click="goBack" class="uk-button"
+                                style="text-transform: none; width:150px; height:40px;margin-right:20px; ">
+                                Back
+                                <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
+                            </button>
+                            <button @click="performEntryUpdate" class="uk-button ffg-button" style="width:150px; height:40px; ">
+                                Update
+                                <span class="uk-icon" uk-icon="icon: plus"></span>
+                            </button>
+                        </div>
+                        <div style="text-align: center;">
+                            <hr  v-if="!creatingEntry" class="uk-divider-icon" style="margin:10px 0px;">
+                            <button v-if="!creatingEntry"  @click="performEntryUpdate('delete')" class="uk-button ffg-button-danger" style="font-weight: bold; text-transform: none; width:200px; height:50px;">
+                                Delete Entry
+                                <span class="uk-icon" uk-icon="icon: close"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div style="padding-left: 15px; padding-bottom: 15px; padding-right: 15px;">
-                <span class="normal-txt" style="margin-top:10px;">
-                    Name:
-                </span>
-                <div style=" width:100%;" class="uk-inline">
-                    <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
-                    <input v-model="entryName" style="width:100%; border-radius: 4px;" class="uk-input normal-txt"
-                        type="text" placeholder="Entry Name" aria-label="Input">
 
-
+            <div v-if="entryMode">
+                <div style="padding-left: 15px; padding-bottom: 15px; padding-top: 15px; padding-right: 15px;"
+                    class="uk-grid-match" uk-grid>
+                    <div class="uk-width-expand">
+                        <h4 class="truncate-one-line modal-header" style="margin-top:10px;">
+                            Create entry under: <b style="color:#1e87f0;"> {{ getAltName(node) }} </b>
+                        </h4>
+                    </div>
+                    <div class="k-width-expand uk-text-right">
+                        <div>
+    
+                        </div>
+                    </div>
                 </div>
-                <div v-if="validateEntryNameError != ''" style="">
-                    <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
-                            uk-icon="icon: warning;"></span> {{ validateEntryNameError }} </span>
-                </div>
-
-                <div style="margin-top:10px;">
+                <div style="padding-left: 15px; padding-bottom: 15px; padding-right: 15px;">
                     <span class="normal-txt" style="margin-top:10px;">
-                        Description:
+                        Name:
                     </span>
-
-                    <QuillEditor style="height:300px;" contentType="html" v-model:content="entry_content"
-                        :options="toolbarOptions" theme="snow" />
-
-                    <div v-if="createEntryError != ''" style="margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
+                        <input v-model="entryName" style="width:100%; border-radius: 4px;" class="uk-input normal-txt"
+                            type="text" placeholder="Entry Name" aria-label="Input">
+    
+    
+                    </div>
+                    <div v-if="validateEntryNameError != ''" style="">
                         <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
-                                uk-icon="icon: warning;"></span> {{ createEntryError }} </span>
+                                uk-icon="icon: warning;"></span> {{ validateEntryNameError }} </span>
                     </div>
-
-                    <h2 class="modal-header">Upload media cover image or screenshots (First image is the cover)</h2>
-
-
-                    <ul id="mediaviewer" v-if="mediaFiles.length > 0"
-                        class="uk-grid-small uk-child-width-1-2 uk-child-width-1-4@s"
-                        uk-sortable="handle: .uk-sortable-handle" uk-grid>
-                        <li :key="m.file_hash" v-for="(m, idx) in mediaFiles">
-                            <div style="padding:4px;" class="uk-card uk-card-default uk-card-body uk-text-center">
-                                <img style="max-height: 200px; max-width: 200px;" :data-hash="m.file_hash"
-                                    :src="m.previewURL" />
-                                <div style="text-align: center;">
-                                    <span uk-tooltip="Move" class="uk-sortable-handle uk-margin-small-right uk-text-center"
-                                        uk-icon="icon: table"></span>
-                                    <span @click="removeMedia(idx)" uk-tooltip="Delete" style="color:red; cursor: pointer;"
-                                        uk-icon="close">
-                                    </span>
+    
+                    <div style="margin-top:10px;">
+                        <span class="normal-txt" style="margin-top:10px;">
+                            Description:
+                        </span>
+    
+                        <QuillEditor style="height:300px;" contentType="html" v-model:content="entry_content"
+                            :options="toolbarOptions" theme="snow" />
+    
+                        <div v-if="createEntryError != ''" style="margin-top:10px;">
+                            <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                    uk-icon="icon: warning;"></span> {{ createEntryError }} </span>
+                        </div>
+    
+                        <h2 class="modal-header">Upload media cover image or screenshots (First image is the cover)</h2>
+    
+    
+                        <ul id="mediaviewer" v-if="mediaFiles.length > 0"
+                            class="uk-grid-small uk-child-width-1-2 uk-child-width-1-4@s"
+                            uk-sortable="handle: .uk-sortable-handle" uk-grid>
+                            <li :key="m.file_hash" v-for="(m, idx) in mediaFiles">
+                                <div style="padding:4px;" class="uk-card uk-card-default uk-card-body uk-text-center">
+                                    <img style="max-height: 200px; max-width: 200px;" :data-hash="m.file_hash"
+                                        :src="m.previewURL" />
+                                    <div style="text-align: center;">
+                                        <span uk-tooltip="Move" class="uk-sortable-handle uk-margin-small-right uk-text-center"
+                                            uk-icon="icon: table"></span>
+                                        <span @click="removeMedia(idx)" uk-tooltip="Delete" style="color:red; cursor: pointer;"
+                                            uk-icon="close">
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        </li>
-                    </ul>
-
-                    <div v-show="mediaFiles.length < 5" style="margin-top:14px;">
-                        <button @click="openUploadMediaModal" class="uk-button ffg-button"
-                            style="width:150px; height:40px; ">
-                            Add
-                            <span class="uk-icon" uk-icon="icon: image"></span>
-                        </button>
-                    </div>
-
-                    <div style="text-align:center; margin-top:10px;" v-if="creatingEntry">
-                        <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
-                    </div>
-
-                    <div v-if="!creatingEntry" style="margin-top:10px; text-align: center;">
-                        <button @click="goBack" class="uk-button"
-                            style="text-transform: none; width:150px; height:40px;margin-right:20px; ">
-                            Back
-                            <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
-                        </button>
-                        <button @click="createEntry" class="uk-button ffg-button" style="width:150px; height:40px; ">
-                            Create
-                            <span class="uk-icon" uk-icon="icon: plus"></span>
-                        </button>
+                            </li>
+                        </ul>
+    
+                        <div v-show="mediaFiles.length < 5" style="margin-top:14px;">
+                            <button @click="openUploadMediaModal" class="uk-button ffg-button"
+                                style="width:150px; height:40px; ">
+                                Add
+                                <span class="uk-icon" uk-icon="icon: image"></span>
+                            </button>
+                        </div>
+    
+                        <div style="text-align:center; margin-top:10px;" v-if="creatingEntry">
+                            <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                        </div>
+    
+                        <div v-if="!creatingEntry" style="margin-top:10px; text-align: center;">
+                            <button @click="goBack" class="uk-button"
+                                style="text-transform: none; width:150px; height:40px;margin-right:20px; ">
+                                Back
+                                <span class="uk-icon" uk-icon="icon:  arrow-left"></span>
+                            </button>
+                            <button @click="createEntry" class="uk-button ffg-button" style="width:150px; height:40px; ">
+                                Create
+                                <span class="uk-icon" uk-icon="icon: plus"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -96,14 +201,26 @@
             <div style="padding-left: 15px; padding-bottom: 15px; padding-top: 15px; padding-right: 15px;"
                 class="uk-grid-match" uk-grid>
                 <div class="uk-width-expand">
-                    <h4 style="color: rgb(13, 13, 13);  font-weight: 700; margin-top:10px;">
-                        {{ node.name }}
+                    <h4 class="truncate-one-line" style="color: rgb(13, 13, 13);  font-weight: 700; margin-top:10px;">
+                        {{ getAltName(node) }}
                     </h4>
                 </div>
                 <div class="k-width-expand uk-text-right">
                     <div v-show="getPermission() != 'guest'">
                         <div>
-                            <button class="uk-button ffg-button" style="width:150px; height:40px; ">
+                            <router-link style="margin-right: 10px;" :to="'/channels/search/?channel_name=' + root_node.name +'&channel=' + root_node.node_hash">
+                                <button class="uk-button ffg-button-search " style="text-transform: none; color:#000; font-weight: 500; padding:0px 10px;">
+                                    Search Channel
+                                    <span style="color:#000;" class="uk-icon" uk-icon="icon: search"></span>
+                                </button>
+                            </router-link>
+
+                            <button v-if="getPermission() == 'owner' && node.node_type==1" @click="openEditChannelModal()" style="margin-right:8px; text-transform: none; border-radius: 3px; border:1px solid #ababab;" class="uk-button uk-button-default" type="button">
+                                Edit Channel
+                                <span class="uk-icon" uk-icon="icon: nut"></span>
+                            </button>
+
+                            <button v-show="node.node_type != 5 && isNewButtonAvailable()" class="uk-button ffg-button" style="width:150px; height:40px; ">
                                 New
                                 <span class="uk-icon" uk-icon="icon: plus"></span>
                             </button>
@@ -111,7 +228,7 @@
                                 style="background-color:white; border:1px solid #e3e3e3; text-align: left;"
                                 uk-dropdown="mode: click; delay-hide:0;">
                                 <ul style="padding:0px; margin:0px;" class="chan-action-ul uk-list">
-                                    <li v-if="getPermission() == 'admin' && (node.node_type == 1 || node.node_type == 2)" @click="openCreateSubChannelModal"
+                                    <li v-if="(getPermission() == 'admin' || getPermission() == 'owner') && (node.node_type == 1 || node.node_type == 2)" @click="openCreateSubChannelModal"
                                         class="clickable">
                                         <span uk-icon="icon:thumbnails;"></span> Subchannel
                                     </li>
@@ -179,10 +296,10 @@
                                 <div
                                     style=" background-color: #3e15ca; margin: 0px auto;width: 64px;font-weight: 600;color: white;font-size: 2.5em;text-align: center;border-radius: 50%;height: 64px; ">
                                     <span style="display:inline-block; margin-top:2px;"> {{
-                                        $filters.firstletter(node.name) }} </span>
+                                        $filters.firstletter(getAltName(node)) }} </span>
                                 </div>
                                 <div style="padding:10px;">
-                                    <span style="color:#000;">
+                                    <span class="truncate-one-line" style="color:#000;">
                                         {{ node.description }}
                                     </span>
                                 </div>
@@ -199,22 +316,22 @@
                                             <td style="width: 34px; vertical-align: middle">
                                                 <div v-if="ch.node_type <= 2"
                                                     style=" background-color: #000; margin: 0px auto;width: 32px;font-weight: 600;color: white;font-size: 1.2em;text-align: center;border-radius: 4px;height: 32px; ">
-                                                    <span style="display:inline-block; margin-top:2px;"> {{
-                                                        $filters.firstletter(ch.name) }} </span>
+                                    
+                                                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 90 112.5" style="fill:white; enable-background:new 0 0 90 90;" xml:space="preserve"><path d="M17.310547,56.456055c-0.136719,0.422363,0.021484,0.885254,0.388672,1.135254  c0.169922,0.116211,0.366211,0.17334,0.5625,0.17334c0.226563,0,0.452148-0.07666,0.635742-0.228516  c0.151367-0.124023,3.552734-2.950195,6.745117-7.413086c0.788147,0.393311,1.613831,0.739685,2.456238,1.056824  c1.073853,8.711487,10.898499,15.556458,22.825012,15.556458c3.853516,0,7.661133-0.736816,11.054688-2.134766  c5.150391,4.104492,10.963867,6.495117,11.21582,6.597656c0.12207,0.049805,0.25,0.07373,0.376953,0.07373  c0.301758,0,0.595703-0.136719,0.789063-0.38623c0.275391-0.353516,0.28125-0.847168,0.015625-1.20752  c-2.114258-2.865723-3.479492-7.292969-4.276367-10.679688c2.456055-2.79541,3.750977-6.036621,3.750977-9.404785  c0-6.703735-5.176392-12.517151-12.694885-15.333252c-1.088806-8.760864-10.921875-15.534424-22.801208-15.534424  c-12.641602,0-22.925781,7.689453-22.925781,17.141602c0,3.188477,1.185547,6.296875,3.431641,9.011719  C18.918945,47.888184,18.682617,52.229004,17.310547,56.456055z M71.850586,49.594727  c0,3.013672-1.236328,5.932129-3.574219,8.438965c-0.225586,0.242188-0.317383,0.580078-0.244141,0.902832  c0.819336,3.621094,1.826172,6.647949,3.007813,9.044434c-2.238281-1.14209-5.419922-2.960938-8.262695-5.306641  c-0.182617-0.150391-0.408203-0.228516-0.636719-0.228516c-0.136719,0-0.273438,0.027832-0.402344,0.084473  c-3.28125,1.443359-7.021484,2.206055-10.814453,2.206055c-11.539063,0-20.926758-6.79248-20.926758-15.141602  s9.387695-15.141602,20.926758-15.141602S71.850586,41.245605,71.850586,49.594727z M38.354492,20.727051  c10.432129,0,19.146606,5.528687,20.685608,12.839233c-2.52478-0.717102-5.259216-1.113159-8.116272-1.113159  c-12.372009,0-22.480591,7.366089-22.906372,16.540527c-0.761902-0.317383-1.507751-0.657043-2.211792-1.041504  c-0.453125-0.245605-1.015625-0.108887-1.305664,0.314453c-1.494141,2.191895-3.103516,4.03125-4.389648,5.364746  c0.703125-3.472656,0.807617-6.764648,0.741211-9.154785c-0.006836-0.22998-0.092773-0.451172-0.243164-0.625488  c-2.080078-2.411133-3.179688-5.171387-3.179688-7.982422C17.428711,27.519531,26.816406,20.727051,38.354492,20.727051z"/><path d="M48.035156,49.594727c0,1.592773,1.295898,2.888672,2.888672,2.888672S53.8125,51.1875,53.8125,49.594727  s-1.295898-2.888672-2.888672-2.888672S48.035156,48.001953,48.035156,49.594727z M51.8125,49.594727  c0,0.490234-0.398438,0.888672-0.888672,0.888672s-0.888672-0.398438-0.888672-0.888672s0.398438-0.888672,0.888672-0.888672  S51.8125,49.104492,51.8125,49.594727z"/><path d="M42.9375,46.706055c-1.592773,0-2.888672,1.295898-2.888672,2.888672s1.295898,2.888672,2.888672,2.888672  s2.888672-1.295898,2.888672-2.888672S44.530273,46.706055,42.9375,46.706055z M42.9375,50.483398  c-0.490234,0-0.888672-0.398438-0.888672-0.888672s0.398438-0.888672,0.888672-0.888672s0.888672,0.398438,0.888672,0.888672  S43.427734,50.483398,42.9375,50.483398z"/><path d="M58.910156,52.483398c1.592773,0,2.888672-1.295898,2.888672-2.888672s-1.295898-2.888672-2.888672-2.888672  s-2.888672,1.295898-2.888672,2.888672S57.317383,52.483398,58.910156,52.483398z M58.910156,48.706055  c0.490234,0,0.888672,0.398438,0.888672,0.888672s-0.398438,0.888672-0.888672,0.888672s-0.888672-0.398438-0.888672-0.888672  S58.419922,48.706055,58.910156,48.706055z"/></svg>
                                                 </div>
-                                                <div v-if="ch.node_type == 3"
+                                                <!-- <div v-if="ch.node_type == 3"
                                                     style=" background-color: #3e15ca; margin: 0px auto;width: 32px;font-weight: 600;color: white;font-size: 1.2em;text-align: center;border-radius: 4px;height: 32px; ">
                                                     <span style="display:inline-block; margin-top:2px;"> {{
-                                                        $filters.firstletter(ch.name) }} </span>
-                                                </div>
-                                                <img v-if="ch.node_type == 4" src="/assets/folder.png" />
-                                                <img v-if="ch.node_type == 5" :src="nodeVector(ch.name)" />
+                                                        $filters.firstletter(getAltName(ch)) }} </span>
+                                                </div> -->
+                                                <!-- <img v-if="ch.node_type == 4" src="/assets/folder.png" />
+                                                <img v-if="ch.node_type == 5" :src="nodeVector(getAltName(ch))" /> -->
                                             </td>
                                             <td>
                                                 <div style="text-align: left; vertical-align: middle; padding-top:5px;">
-                                                    <router-link style="font-weight: bold"
-                                                        :to="'/channels/node/' + ch.node_hash"> {{ ch.name }}</router-link>
-                                                    <div v-if="ch.description != '' && ch.node_type <= 2"
+                                                    <router-link class="truncate-one-line" style="font-weight: bold"
+                                                        :to="'/channels/node/' + ch.node_hash"> {{ getAltName(ch) }}</router-link>
+                                                    <div class="truncate-one-line" v-if="ch.description != '' && ch.node_type <= 2"
                                                         style="font-size: 0.9em; padding: 0; margin: 0">
                                                         {{ ch.description }}
                                                     </div>
@@ -222,6 +339,9 @@
                                             </td>
                                             <td style="vertical-align: middle; text-align:right;">
                                                 <div class="normal-txt">{{ $filters.timestamptodate(ch.timestamp) }}</div>
+                                            </td>
+                                            <td style="padding:0; width:25px; vertical-align: middle; text-align:right;">
+                                                <span uk-tooltip="Edit" v-if="getPermission() == 'owner' || getPermission() == 'admin'" style="padding: 2px; border-radius: 4px; border: 1px solid #959595; cursor: pointer;" uk-icon="icon:pencil; ratio:1.1;" @click="openUpdateSubChannelModal(ch)"></span>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -346,24 +466,24 @@
                                     <tbody>
                                         <tr v-for="(ch) in otherChannelNodes" :key="ch.node_hash">
                                             <td style="width: 34px; vertical-align: middle">
-                                                <div v-if="ch.node_type <= 2"
+                                                <!-- <div v-if="ch.node_type <= 2"
                                                     style=" background-color: #000; margin: 0px auto;width: 32px;font-weight: 600;color: white;font-size: 1.2em;text-align: center;border-radius: 4px;height: 32px; ">
                                                     <span style="display:inline-block; margin-top:2px;"> {{
-                                                        $filters.firstletter(ch.name) }} </span>
-                                                </div>
+                                                        $filters.firstletter(getAltName(ch)) }} </span>
+                                                </div> -->
                                                 <div v-if="ch.node_type == 3"
                                                     style=" background-color: #3e15ca; margin: 0px auto;width: 32px;font-weight: 600;color: white;font-size: 1.2em;text-align: center;border-radius: 4px;height: 32px; ">
                                                     <span style="display:inline-block; margin-top:2px;"> {{
-                                                        $filters.firstletter(ch.name) }} </span>
+                                                        $filters.firstletter(getAltName(ch)) }} </span>
                                                 </div>
                                                 <img v-if="ch.node_type == 4" src="/assets/folder.png" />
-                                                <img v-if="ch.node_type == 5" :src="nodeVector(ch.name)" />
+                                                <img v-if="ch.node_type == 5" :src="nodeVector(getAltName(ch))" />
                                             </td>
                                             <td>
                                                 <div style="text-align: left; vertical-align: middle; padding-top:5px;">
-                                                    <router-link style="font-weight: bold"
-                                                        :to="'/channels/node/' + ch.node_hash"> {{ ch.name }}</router-link>
-                                                    <div v-if="ch.description != '' && ch.node_type <= 2"
+                                                    <router-link class="truncate-one-line" style="font-weight: bold"
+                                                        :to="'/channels/node/' + ch.node_hash"> {{ getAltName(ch) }}</router-link>
+                                                    <div class="truncate-one-line" v-if="ch.description != '' && ch.node_type <= 2"
                                                         style="font-size: 0.9em; padding: 0; margin: 0">
                                                         {{ ch.description }}
                                                     </div>
@@ -371,6 +491,11 @@
                                             </td>
                                             <td style="vertical-align: middle; text-align:right;">
                                                 <div class="normal-txt">{{ $filters.timestamptodate(ch.timestamp) }}</div>
+                                            </td>
+                                            <td style="padding:0; width:25px; vertical-align: middle; text-align:right;">
+                                                <span v-if="ch.node_type == 4 && canEdit(ch)" uk-tooltip="Edit" style="padding: 2px; border-radius: 4px; border: 1px solid #959595; cursor: pointer;" uk-icon="icon:pencil; ratio:1.1;" @click="openUpdateFolderModal(ch)"></span>
+                                                <span v-if="ch.node_type == 3 && canEdit(ch)" uk-tooltip="Edit" style="padding: 2px; border-radius: 4px; border: 1px solid #959595; cursor: pointer;" uk-icon="icon:pencil; ratio:1.1;" @click="openUpdateEntry(ch)"></span>
+                                                <span v-if="ch.node_type == 5 && canEdit(ch)" uk-tooltip="Edit" style="padding: 2px; border-radius: 4px; border: 1px solid #959595; cursor: pointer;" uk-icon="icon:pencil; ratio:1.1;" @click="openUpdateFileModal(ch)"></span>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -512,10 +637,6 @@
                                 </div>
 
                                 <div style="margin-top:10px;" v-if="node.nodes.length > 0">
-                                    <h4
-                                        style="color: rgb(13, 13, 13);  font-weight: 700; padding-top:5px; padding-bottom:5px; margin:0px;">
-                                        Files/Folders
-                                    </h4>
                                     <table style="margin:0px;" class="uk-table uk-table-divider">
                                         <tbody>
                                             <tr v-for="(ch) in node.nodes" :key="ch.node_hash">
@@ -523,22 +644,22 @@
                                                     <div v-if="ch.node_type <= 2"
                                                         style=" background-color: #000; margin: 0px auto;width: 32px;font-weight: 600;color: white;font-size: 1.2em;text-align: center;border-radius: 4px;height: 32px; ">
                                                         <span style="display:inline-block; margin-top:2px;"> {{
-                                                            $filters.firstletter(ch.name) }} </span>
+                                                            $filters.firstletter(getAltName(ch)) }} </span>
                                                     </div>
                                                     <div v-if="ch.node_type == 3"
                                                         style=" background-color: #3e15ca; margin: 0px auto;width: 32px;font-weight: 600;color: white;font-size: 1.2em;text-align: center;border-radius: 4px;height: 32px; ">
                                                         <span style="display:inline-block; margin-top:2px;"> {{
-                                                            $filters.firstletter(ch.name) }} </span>
+                                                            $filters.firstletter(getAltName(ch)) }} </span>
                                                     </div>
                                                     <img v-if="ch.node_type == 4" src="/assets/folder.png" />
-                                                    <img v-if="ch.node_type == 5" :src="nodeVector(ch.name)" />
+                                                    <img v-if="ch.node_type == 5" :src="nodeVector(getAltName(ch))" />
                                                 </td>
                                                 <td>
                                                     <div style="text-align: left; vertical-align: middle; padding-top:5px;">
-                                                        <router-link style="font-weight: bold"
-                                                            :to="'/channels/node/' + ch.node_hash"> {{ ch.name
+                                                        <router-link class="truncate-one-line" style="font-weight: bold"
+                                                            :to="'/channels/node/' + ch.node_hash"> {{ getAltName(ch)
                                                             }}</router-link>
-                                                        <div v-if="ch.description != '' && ch.node_type <= 2"
+                                                        <div class="truncate-one-line" v-if="ch.description != '' && ch.node_type <= 2"
                                                             style="font-size: 0.9em; padding: 0; margin: 0">
                                                             {{ ch.description }}
                                                         </div>
@@ -546,6 +667,10 @@
                                                 </td>
                                                 <td style="vertical-align: middle; text-align:right;">
                                                     <div>{{ $filters.timestamptodate(ch.timestamp) }}</div>
+                                                </td>
+                                                <td style="padding:0; width:25px; vertical-align: middle; text-align:right;">
+                                                    <span v-if="ch.node_type == 4 && canEdit(ch)" uk-tooltip="Edit" style="padding: 2px; border-radius: 4px; border: 1px solid #959595; cursor: pointer;" uk-icon="icon:pencil; ratio:1.1;" @click="openUpdateFolderModal(ch)"></span>
+                                                    <span v-if="ch.node_type == 5 && canEdit(ch)" uk-tooltip="Edit" style="padding: 2px; border-radius: 4px; border: 1px solid #959595; cursor: pointer;" uk-icon="icon:pencil; ratio:1.1;" @click="openUpdateFileModal(ch)"></span>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -671,10 +796,10 @@
                                 style="padding-left: 15px; padding-bottom: 15px; padding-right: 15px;">
                                 <div style="text-align: center;">
                                     <img style="width:64px; height:64px;" v-if="node.node_type == 5"
-                                        :src="nodeVector(node.name)" />
+                                        :src="nodeVector(getAltName(node))" />
                                     <div style="margin-top:10px; text-align:left;">
                                         <br /> <span class="normal-txt" style="font-weight:500;"> Name: </span><span
-                                            class="normal-txt"> {{ node.name }} </span>
+                                            class="normal-txt"> {{ getAltName(node) }} </span>
                                         <br /> <span class="normal-txt" style="font-weight:500;"> File Hash: </span><span
                                             class="normal-txt"> {{ node.file_hash }} </span>
                                         <br /> <span class="normal-txt" style="font-weight:500;"> File Merkle Hash:
@@ -765,6 +890,87 @@
             </div>
         </div>
 
+        <div id="modal-updatefolder" uk-modal="container:#node-container">
+            <div class="uk-modal-dialog uk-modal-body">
+                <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 class="modal-header">Update Folder</h2>
+                <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
+                    <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;"
+                        src="/assets/icon.png" />
+                </div>
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
+                        <input v-model="folderToBeUpdated.folder_name" style="width:100%; border-radius: 4px;" class="uk-input normal-txt"
+                            type="text" placeholder="Name" aria-label="Input">
+                    </div>
+                    <div v-if="folderToBeUpdated.validateFolderNameError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                uk-icon="icon: warning;"></span> {{ folderToBeUpdated.validateFolderNameError }} </span>
+                    </div>
+                    <br /> <br />
+                    <span class="normal-txt" style="font-weight: 500;">
+                        Folder update fees: {{ subchannelRegistrationFees }} FFG
+                    </span>
+                </div>
+
+                <div style="padding: 10px; margin-top:5px;">
+                    <button v-if="!folderToBeUpdated.updatingFolder && !folderToBeUpdated.folderUpdated" @click="updateFolder" class="uk-button ffg-button"
+                        style="font-weight: bold; text-transform: none; width:100%; height:50px;">
+                        Update Folder
+                        <span class="uk-icon" uk-icon="icon: thumbnails"></span>
+                    </button>
+                    <div style="text-align:center;" v-if="folderToBeUpdated.updatingFolder">
+                        <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                    </div>
+
+                    <br />
+                    <div v-if="folderToBeUpdated.updateFolderError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                uk-icon="icon: warning;"></span> {{ folderToBeUpdated.updateFolderError }} </span>
+                    </div>
+                    <div>
+                        <hr v-if="!folderToBeUpdated.updatingFolder" class="uk-divider-icon" style="margin:10px 0px;">
+                        <button v-if="!folderToBeUpdated.updatingFolder && !folderToBeUpdated.folderUpdated" @click="updateFolder('delete')" class="uk-button ffg-button-danger" style="font-weight: bold; text-transform: none; width:100%; height:50px;">
+                            Delete Folder
+                            <span class="uk-icon" uk-icon="icon: close"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="modal-updatefile" uk-modal="container:#node-container">
+            <div class="uk-modal-dialog uk-modal-body">
+                <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 class="modal-header">Update File</h2>
+                <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
+                    <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;"
+                        src="/assets/icon.png" />
+                </div>
+                <div style="padding: 10px; margin-top:10px;">
+                    <span class="normal-txt" style="font-weight: 500;">
+                        File update fees: {{ subchannelRegistrationFees }} FFG
+                    </span>
+                </div>
+
+                <div style="padding: 10px; margin-top:5px;">
+                    <div>
+                        <div style="text-align:center;" v-if="fileToBeUpdated.updatingFile">
+                            <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                        </div>
+                    </div>
+                    <div style="margin-top:7px;">
+                        <button v-if="!fileToBeUpdated.updatingFile" @click="updateFile('delete')" class="uk-button ffg-button-danger" style="font-weight: bold; text-transform: none; width:100%; height:50px;">
+                            Delete File
+                            <span class="uk-icon" uk-icon="icon: close"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="modal-createsubchannel" uk-modal="container:#node-container">
             <div class="uk-modal-dialog uk-modal-body">
                 <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
@@ -825,6 +1031,145 @@
             </div>
         </div>
 
+        <div id="modal-updatesubchannel" uk-modal="container:#node-container">
+            <div v-if="updateSubchannel!= null" class="uk-modal-dialog uk-modal-body">
+                <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 class="modal-header">Update Subchannel</h2>
+                <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
+                    <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;"
+                        src="/assets/icon.png" />
+
+                </div>
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
+                        <input v-model="updateSubchannel.name" style="width:100%; border-radius: 4px;" class="normal-txt uk-input"
+                            type="text" placeholder="Subchannel Name" aria-label="Input">
+                    </div>
+                    <div v-if="validateNameError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                uk-icon="icon: warning;"></span> {{ validateNameError }} </span>
+                    </div>
+
+                </div>
+                <div style="padding: 10px; margin-top:5px;">
+                    <div style="width:100%;" class="uk-inline">
+                        <textarea v-model="updateSubchannel.description" class="uk-textarea normal-txt" rows="5" placeholder="Description"
+                            aria-label="Textarea"></textarea>
+                    </div>
+                    <div v-if="validateDescError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                uk-icon="icon: warning;"></span> {{ validateDescError }}</span>
+                    </div>
+                    <br /> <br />
+                    <span class="normal-txt" style="font-weight: 500;">
+                        Subchannel update fees: {{ subchannelRegistrationFees }} FFG
+                    </span>
+                </div>
+
+                <div style="padding: 10px; margin-top:5px;">
+                    <button v-if="!creatingSubChannel && !subChannelCreated" @click="performUpdateSubChannel"
+                        class="uk-button ffg-button"
+                        style="font-weight: bold; text-transform: none; width:100%; height:50px;">
+                        Update Sub-channel
+                        <span class="uk-icon" uk-icon="icon: thumbnails"></span>
+                    </button>
+                    <div style="text-align:center;" v-if="creatingSubChannel">
+                        <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                    </div>
+
+                    <div style="text-align:center;" v-if="subChannelCreated">
+                        Subchannel was successfully updated
+                    </div>
+
+                    <br />
+                    <div v-if="createSubChannelError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;"
+                                uk-icon="icon: warning;"></span> {{ createSubChannelError }} </span>
+                    </div>
+                    <div>
+                        <hr v-if="!creatingSubChannel" class="uk-divider-icon" style="margin:10px 0px;">
+                        <button v-if="!creatingSubChannel && !subChannelCreated" @click="performUpdateSubChannel('delete')" class="uk-button ffg-button-danger" style="font-weight: bold; text-transform: none; width:100%; height:50px;">
+                            Delete Sub-channel
+                            <span class="uk-icon" uk-icon="icon: close"></span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-channelupdate" uk-modal="container:#node-container">
+            <div class="uk-modal-dialog uk-modal-body">
+                <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 class="modal-header">Update Channel</h2>
+                <div style="padding-bottom:10px; text-align: center; border-bottom:1px solid rgb(230, 230, 230);">
+                    <img style="height: 72px; background-color: white; width: 72px; border-radius: 50%;" src="/assets/icon.png" />
+                  
+                </div>
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: pencil"></span>
+                        <input v-model="updateChannel.name" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="Channel Name" aria-label="Input">
+                    </div>
+                    <div v-if="validateNameError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;" uk-icon="icon: warning;"></span> {{ validateNameError }} </span>
+                    </div>
+                </div>
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: bolt"></span>
+                        <input v-model="updateChannel.admins" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="Additional Admins (comma separated addresses)" aria-label="Input">
+                    </div>
+                </div>
+                <div style="padding: 10px; margin-top:10px;">
+                    <div style=" width:100%;" class="uk-inline">
+                        <span style="color: #000;" class="uk-form-icon" uk-icon="icon: users"></span>
+                        <input v-model="updateChannel.posters" style="width:100%; border-radius: 4px; " class="uk-input normal-txt" type="text" placeholder="Posters (comma separated addresses)" aria-label="Input">
+                    </div>
+                </div>
+                <div style="padding: 10px; margin-top:5px;">
+                    <div style="width:100%;" class="uk-inline">
+                        <textarea  v-model="updateChannel.description" class="uk-textarea normal-txt" rows="5" placeholder="Description" aria-label="Textarea"></textarea>
+                    </div>
+                    <div v-if="updateChannel.validateDescError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;" uk-icon="icon: warning;"></span> {{ updateChannel.validateDescError }}</span>
+                    </div>
+                    <br /> <br />
+                    <span class="normal-txt" style="font-weight: 500;">
+                        Channel update fees: {{ subchannelRegistrationFees }} FFG
+                    </span>
+                </div>
+                
+                <div style="padding: 10px; margin-top:5px;">
+                    <button v-if="!updateChannel.updatingChannel && !updateChannel.channelUpdated"  @click="performUpdateChannel" class="uk-button ffg-button" style="font-weight: bold; text-transform: none; width:100%; height:50px;">
+                        Update Channel
+                        <span class="uk-icon" uk-icon="icon: thumbnails"></span>
+                    </button>
+                    <div style="text-align:center;" v-if="updateChannel.updatingChannel">
+                        <span style="color:#3e15ca;" class="uk-margin-small-right" uk-spinner="ratio: 1"></span>
+                    </div>
+
+                     <div style="text-align:center;" v-if="updateChannel.channelUpdated">
+                        Channel was successfully updated
+                    </div>
+
+                    <br />
+                    <div v-if="updateChannel.updateChannelError != ''" style="margin-top:10px;">
+                        <span class="uk-text-small uk-text-danger"> <span style="margin-right:5px;" uk-icon="icon: warning;"></span> {{ updateChannel.updateChannelError }} </span>
+                    </div>
+
+                    <div>
+                        <hr  v-if="!updateChannel.updatingChannel" class="uk-divider-icon" style="margin:10px 0px;">
+                        <button v-if="!updateChannel.updatingChannel && !updateChannel.channelUpdated"  @click="performUpdateChannel('delete')" class="uk-button ffg-button-danger" style="font-weight: bold; text-transform: none; width:100%; height:50px;">
+                            Delete Channel
+                            <span class="uk-icon" uk-icon="icon: close"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="modal-upload" uk-modal="container:#node-container; esc-close:false; bg-close:false; ">
             <div style="padding-top:17px; width:60%; padding-bottom: 20px;" class="uk-modal-dialog uk-modal-body">
                 <button id="close-modal-create" class="uk-modal-close-default" type="button" uk-close></button>
@@ -854,7 +1199,7 @@
 <script>
 const { ipcRenderer } = window.require("electron");
 import axios from 'axios';
-import { globalState, SetEntryCreationMode } from '../../store';
+import { globalState, SetEntryCreationMode, SetEntryUpdateMode} from '../../store';
 import { ref } from 'vue';
 import { Units } from "../../unit.js"
 import BigNumber from 'bignumber.js';
@@ -876,6 +1221,14 @@ export default {
     },
     data() {
         return {
+            // file Update
+            tmpFile: null,
+            
+            // entry update
+            loadingMediaFilesInEntryUpdate: false,
+            tmpEntry: null,
+            tmpEntryOriginal: null,
+            
             pagination: {},
             platform: "",
             downloadedMedia: [],
@@ -963,12 +1316,21 @@ export default {
                 "#4947ef",
                 "#bdbdbd",
             ],
-            channels: []
+            channels: [],
+            updateSubchannel: null,
+            tmpSubChannel: null,
+            updateChannel: { owner: "", enabled: true, name:"", admins:"", posters: "", description: "", validateDescError: "", validateNameError: "", updatingChannel: false, channelUpdated: false, updateChannelError: "",  },
+            folderToBeUpdated: { folder_name: "", updatingFolder: false, folderUpdated: false, validateFolderNameError: "", updateFolderError: "" },
+            fileToBeUpdated : {updatingFile: false, updateFileError: false }
         }
     },
     computed: {
         entryMode() {
             const mode = ref(globalState.entryCreationMode);
+            return mode.value
+        },
+        updateEntryMode() {
+            const mode = ref(globalState.updateEntryMode);
             return mode.value
         },
         globalState() {
@@ -993,7 +1355,7 @@ export default {
                 };
 
                 await this.getData(req);
-                await this.loadMedia()
+                await this.loadMedia(this.node)
             }
         },
     },
@@ -1020,12 +1382,174 @@ export default {
         };
 
         await this.getData(req);
-        await this.loadMedia()
+        await this.loadMedia(this.node)
     },
     methods: {
+        isNewButtonAvailable() {
+            let perm = this.getPermission();
+            if(perm == "owner" || perm == "admin") return true;
+            if(perm == "poster" && (this.node.node_type == 1 ||  this.node.node_type == 2 || this.node.owner == this.nodeAddress )) return true
+            return false;
+        },
+        canEdit(ch) {
+            let perm = this.getPermission();
+            if(perm == "owner" || perm == "admin") return true;
+            if(perm == "poster" && ch.owner == this.nodeAddress) return true;
+            return false
+        },
+        async performUpdateChannel(op) {
+            try {
+                if(this.updateChannel.updatingChannel) {
+                    return;
+                }
+
+                let admins = this.updateChannel.admins.split(',').map((o) => o.trim()).filter((o) => o && o!= "" && o.length == 42)
+                let posters = this.updateChannel.posters.split(',').map((o) => o.trim()).filter((o) => o && o!= "" && o.length == 42)
+
+                if(this.updateChannel.name == "") {
+                    this.updateChannel.validateNameError = "Channel name is required";
+                    return;
+                } else {
+                    this.updateChannel.validateNameError = "";
+                }
+
+                if(this.updateChannel.description == "") {
+                    this.updateChannel.validateDescError = "Channel description is required";
+                    return;
+                } else {
+                    this.updateChannel.validateDescError = "";
+                }
+
+                if(op && op == "delete") {
+                    const userConfirmed = confirm("Are you sure you want to delete the channel?");
+                    if (!userConfirmed) {
+                        return
+                    }
+                    this.updateChannel.enabled = false;
+                }
+            
+                this.updateChannel.updatingChannel = true;
+                this.updateChannel.updateChannelError = "";
+                let copiedNode = JSON.parse(JSON.stringify(this.node));
+
+                copiedNode.admins = admins;
+                copiedNode.posters = posters;
+                copiedNode.enabled = this.updateChannel.enabled;
+                // copiedNode.name =  this.updateChannel.name;
+                // if the name was changed
+                // then go to the attributes and find the alt_name and edit it
+                if(this.getAltName(copiedNode) != this.updateChannel.name) {
+                    if(copiedNode.attributes == undefined) {
+                        copiedNode.attributes = []
+                    }
+
+                    let foundIndex = -1
+                    copiedNode.attributes.forEach((attr, idx) => {
+                        if(attr.includes("alt_name:")) {
+                            foundIndex = idx
+                        }
+                    })
+
+                    if(foundIndex == -1) {
+                        copiedNode.attributes.push("alt_name:" +this.updateChannel.name)
+                    } else {
+                        copiedNode.attributes[foundIndex] = "alt_name:" +this.updateChannel.name
+                    }
+                }
+
+                copiedNode.description = this.updateChannel.description;
+                if(this.updateChannel.owner != "" && this.updateChannel.owner.length == 42) {
+                    copiedNode.owner = this.updateChannel.owner;
+                }
+
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "channel.CreateNodeItemsTxDataPayload",
+                    params: [{ is_update: true, nodes: [copiedNode] }],
+                    id: 1
+                };
+    
+                const endpoint = ref(globalState.rpcEndpoint);
+                const response = await axios.post(endpoint.value, data);
+               
+                let channelFees = numberToBN(response.data.result.total_fees_required);
+                let balanceRes = await this.getBalance();
+                let balanceFFGOneBig = numberToBN(balanceRes.balance_hex);
+                if(balanceFFGOneBig.lt(channelFees)) {
+                    throw new Error(
+                        `You don't have enough coins in your balance!`
+                    );
+                }
+                const jwtAccess = ref(globalState.jwtAccessToken);   
+                const sendTxRes = await callJsonRpc2Endpoint("transaction.SendTransaction", [{ access_token: jwtAccess.value, nounce: balanceRes.next_nounce, data : response.data.result.transaction_data_payload_hex, from: this.nodeAddress , to: "0x01", value: "0x0", transaction_fees: response.data.result.total_fees_required }])
+                this.lastTXSent = sendTxRes.data.result.transaction.hash
+                              
+                let tries = 0;
+                let loadTxInterval = setInterval(async() => {
+                    if(tries > 21) {
+                        this.updateChannel.updateChannelError = "It seems like there was an error sending your transaction. Please reload the page to see if your channel was created.";
+                        this.updateChannel.updatingChannel = false;
+                        clearInterval(loadTxInterval);
+                        return
+                    }
+                    tries++;
+                    let res = await this.getTransaction(this.lastTXSent)
+                    if(res.transactions && res.transactions.length > 0) {
+                        this.updateChannel.channelUpdated = true;  
+                        this.updateChannel.updatingChannel = false;
+                        this.updateChannel.admins = ""
+                        this.updateChannel.posters = ""
+                        clearInterval(loadTxInterval);
+                        this.closeCreateChannelModal();
+                        
+                        if(op && op == "delete") {
+                            this.$router.push("/channels")
+                        } else {
+                            await this.reload()
+                        }
+
+                        return
+                    }
+                }, 2000)
+            } catch (e) {
+                this.updateChannel.updateChannelError = e.message;
+                this.updateChannel.updatingChannel = false;
+            } 
+        },
+        openEditChannelModal() {
+            this.updateChannel.name = this.getAltName(this.node)
+            this.updateChannel.description = this.node.description;
+            this.updateChannel.admins = this.node.admins.join(",")
+            this.updateChannel.posters = this.node.posters.join(",")
+            this.updateChannel.channelUpdated = false;
+            const myModal = document.getElementById('modal-channelupdate');
+            const modal = window.UIkit.modal(myModal);
+            modal.show();
+        },
+        closeCreateChannelModal() {
+            this.updateChannel.channelUpdated = false;
+            const myModal = document.getElementById('modal-channelupdate');
+            const modal = window.UIkit.modal(myModal);
+            modal.hide();
+        },
+        getAltName(node){
+            if(node.attributes != undefined && node.attributes.length > 0) {
+                let finalName = ""
+                node.attributes.forEach((attr) => {
+                    if(attr.includes("alt_name:")) {
+                        let names = attr.split("alt_name:")
+                        if(names.length > 0) {
+                            finalName = names[1]
+                        }
+                    }
+                })
+                if(finalName != "") return finalName;
+            }
+            return node.name
+        },
         getPermission() {
             if(this.root_node && this.root_node.owner == this.nodeAddress) {
-                return "admin";
+                return "owner";
             }
 
             if(this.root_node && this.root_node.admins && this.root_node.admins.length > 0) {
@@ -1081,16 +1605,18 @@ export default {
         },
         hasMedia(node) {
             try {
-                if (node.attributes.length > 0 && node.attributes[0].startsWith("media:")) {
-                    return true
+                for(let i=0;i<node.attributes.length;i++) {
+                    if (node.attributes[i].startsWith("media:")) {
+                        return true
+                    }
                 }
                 return false
             } catch (e) {
                 return false
             }
         },
-        extractImageDataHash() {
-            const mediaviewerDiv = document.getElementById("mediaviewer");
+        extractImageDataHash(idOfContainer) {
+            const mediaviewerDiv = document.getElementById(idOfContainer);
             if (mediaviewerDiv) {
                 const imageElements = mediaviewerDiv.querySelectorAll("img");
                 const imageDataHashArray = [];
@@ -1138,9 +1664,10 @@ export default {
             };
 
             await this.getData(req);
-            await this.loadMedia();
+            await this.loadMedia(this.node);
         },
         goBack() {
+            SetEntryUpdateMode(false)
             SetEntryCreationMode(false);
         },
         openEntryModal() {
@@ -1161,6 +1688,120 @@ export default {
             }
             return filename.slice(dotIndex + 1).toLowerCase();
         },
+        async performEntryUpdate(op) {
+            try {
+                if (this.creatingEntry) {
+                    return;
+                }
+
+                if (this.tmpEntry.name == "") {
+                    this.validateEntryNameError = "Entry name is required";
+                    return;
+                } else {
+                    this.validateEntryNameError = "";
+                }
+
+                if(op && op == "delete") {
+                    const userConfirmed = confirm("Are you sure you want to delete the entry?");
+                    if (!userConfirmed) {
+                        return
+                    }
+                    this.tmpEntry.enabled = false;
+                }
+
+                this.creatingEntry = true;
+                this.createEntryError = "";
+                let sortedImages = this.extractImageDataHash("mediaviewerupdate")
+                let attrs = []
+                sortedImages.filter((o) => {
+                    this.mediaFiles.filter((j) => {
+                        if (o == j.file_hash) {
+                            attrs.push("media:" + j.file_hash + "|" + j.ext)
+                        }
+                    })
+                })
+
+                let attrsWithoutMedia = this.tmpEntry.attributes.filter((o) => !o.startsWith("media:"))
+                this.tmpEntry.attributes = [...attrs, ...attrsWithoutMedia]
+
+
+                // if it contains a rename
+                if(this.getAltName(this.tmpEntryOriginal) != this.tmpEntry.name) {
+                    if(this.tmpEntry.attributes == undefined) {
+                        this.tmpEntry.attributes = []
+                    }
+
+                    let foundIndex = -1
+                    this.tmpEntry.attributes.forEach((attr, idx) => {
+                        if(attr.includes("alt_name:")) {
+                            foundIndex = idx
+                        }
+                    })
+
+                    if(foundIndex == -1) {
+                        this.tmpEntry.attributes.push("alt_name:" +this.tmpEntry.name)
+                    } else {
+                        this.tmpEntry.attributes[foundIndex] = "alt_name:" +this.tmpEntry.name
+                    }
+                }
+
+
+
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "channel.CreateNodeItemsTxDataPayload",
+                    params: [{ is_update:true, nodes: [this.tmpEntry] }],
+                    id: 1
+                };
+
+                const endpoint = ref(globalState.rpcEndpoint);
+                const response = await axios.post(endpoint.value, data);
+
+                let channelFees = numberToBN(response.data.result.total_fees_required);
+                let balanceRes = await this.getBalance();
+                let balanceFFGOneBig = numberToBN(balanceRes.balance_hex);
+                if (balanceFFGOneBig.lt(channelFees)) {
+                    throw new Error(
+                        `You don't have enough coins in your balance!`
+                    );
+                }
+                const jwtAccess = ref(globalState.jwtAccessToken);
+                const sendTxRes = await callJsonRpc2Endpoint("transaction.SendTransaction", [{ access_token: jwtAccess.value, nounce: balanceRes.next_nounce, data: response.data.result.transaction_data_payload_hex, from: this.nodeAddress, to: "0x01", value: "0x0", transaction_fees: response.data.result.total_fees_required }])
+                this.lastTXSent = sendTxRes.data.result.transaction.hash
+
+
+                let tries = 0;
+                let loadTxInterval = setInterval(async () => {
+                    if (tries > 21) {
+                        this.createEntryError = "It seems like there was an error sending your transaction. Please reload the page to see if your entry was created.";
+                        this.creatingEntry = false;
+                        clearInterval(loadTxInterval);
+                        return
+                    }
+                    tries++;
+                    let res = await this.getTransaction(this.lastTXSent)
+                    if (res.transactions && res.transactions.length > 0) {
+                        this.creatingEntry = false;
+                        clearInterval(loadTxInterval);
+                        this.entryName = "";
+                        this.entry_content = "";
+                        this.mediaFiles = [];
+                        SetEntryUpdateMode(false)
+                        if(op && op == "delete") {
+                            await this.reload()
+                        } else {
+                            this.navigateToChannelNode(this.tmpEntry.node_hash);
+                        }
+                        return
+                    }
+                }, 2000)
+
+
+            } catch (e) {
+                this.createEntryError = e.message;
+                this.creatingEntry = false;
+            }
+        },
         async createEntry() {
             try {
                 if (this.creatingEntry) {
@@ -1177,7 +1818,7 @@ export default {
                 this.creatingEntry = true;
                 this.createEntryError = "";
 
-                let sortedImages = this.extractImageDataHash()
+                let sortedImages = this.extractImageDataHash("mediaviewer")
                 let attrs = []
                 sortedImages.filter((o) => {
                     this.mediaFiles.filter((j) => {
@@ -1240,6 +1881,158 @@ export default {
                 this.creatingEntry = false;
             }
         },
+        async updateFile(op) {
+            try {
+                
+                let copiedNode = JSON.parse(JSON.stringify(this.tmpFile))
+                if(op && op == "delete") {
+                    const userConfirmed = confirm("Are you sure you want to delete the file?");
+                    if (!userConfirmed) {
+                        return
+                    }
+                    copiedNode.enabled = false;
+                }
+
+                this.fileToBeUpdated.updatingFile = true;
+
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "channel.CreateNodeItemsTxDataPayload",
+                    params: [{ is_update: true, nodes: [copiedNode] }],
+                    id: 1
+                };
+
+                const endpoint = ref(globalState.rpcEndpoint);
+                const response = await axios.post(endpoint.value, data);
+
+                let channelFees = numberToBN(response.data.result.total_fees_required);
+                let balanceRes = await this.getBalance();
+                let balanceFFGOneBig = numberToBN(balanceRes.balance_hex);
+                if (balanceFFGOneBig.lt(channelFees)) {
+                    throw new Error(
+                        `You don't have enough coins in your balance!`
+                    );
+                }
+                const jwtAccess = ref(globalState.jwtAccessToken);
+                const sendTxRes = await callJsonRpc2Endpoint("transaction.SendTransaction", [{ access_token: jwtAccess.value, nounce: balanceRes.next_nounce, data: response.data.result.transaction_data_payload_hex, from: this.nodeAddress, to: "0x01", value: "0x0", transaction_fees: response.data.result.total_fees_required }])
+                this.lastTXSent = sendTxRes.data.result.transaction.hash
+
+                let tries = 0;
+                let loadTxInterval = setInterval(async () => {
+                    if (tries > 21) {
+                        this.fileToBeUpdated.updateFileError = "It seems like there was an error sending your transaction. Please reload the page to see if your subchannel was created.";
+                        this.fileToBeUpdated.updatingFile = false;
+                        clearInterval(loadTxInterval);
+                        return
+                    }
+                    tries++;
+                    let res = await this.getTransaction(this.lastTXSent)
+                    if (res.transactions && res.transactions.length > 0) {
+                        
+                        this.fileToBeUpdated.updatingFile = false;
+                        clearInterval(loadTxInterval);
+                        await this.reload()
+                        this.closeUpdateFileModal()
+                        return
+                    }
+                }, 2000)
+
+            } catch (e) {
+                this.fileToBeUpdated.updateFileError = e.message;
+                this.fileToBeUpdated.updatingFile = false;
+            }
+        },
+        async updateFolder(op) {
+            try {
+                if (this.folderToBeUpdated.updatingFolder) {
+                    return;
+                }
+
+                if (this.folderToBeUpdated.folder_name == "") {
+                    this.folderToBeUpdated.validateFolderNameError = "Folder name is required";
+                    return;
+                } else {
+                    this.folderToBeUpdated.validateFolderNameError = "";
+                }
+
+                let copiedNode = JSON.parse(JSON.stringify(this.tmpFolder))
+                if(op && op == "delete") {
+                    const userConfirmed = confirm("Are you sure you want to delete the folder?");
+                    if (!userConfirmed) {
+                        return
+                    }
+                    copiedNode.enabled = false;
+                }
+
+                this.folderToBeUpdated.updatingFolder = true;
+                this.folderToBeUpdated.updateFolderError = "";
+                
+                if(this.getAltName(copiedNode) != this.folderToBeUpdated.folder_name) {
+                    if(copiedNode.attributes == undefined) {
+                        copiedNode.attributes = []
+                    }
+
+                    let foundIndex = -1
+                    copiedNode.attributes.forEach((attr, idx) => {
+                        if(attr.includes("alt_name:")) {
+                            foundIndex = idx
+                        }
+                    })
+
+                    if(foundIndex == -1) {
+                        copiedNode.attributes.push("alt_name:" +this.folderToBeUpdated.folder_name)
+                    } else {
+                        copiedNode.attributes[foundIndex] = "alt_name:" +this.folderToBeUpdated.folder_name
+                    }
+                }
+
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "channel.CreateNodeItemsTxDataPayload",
+                    params: [{ is_update: true, nodes: [copiedNode] }],
+                    id: 1
+                };
+
+                const endpoint = ref(globalState.rpcEndpoint);
+                const response = await axios.post(endpoint.value, data);
+
+                let channelFees = numberToBN(response.data.result.total_fees_required);
+                let balanceRes = await this.getBalance();
+                let balanceFFGOneBig = numberToBN(balanceRes.balance_hex);
+                if (balanceFFGOneBig.lt(channelFees)) {
+                    throw new Error(
+                        `You don't have enough coins in your balance!`
+                    );
+                }
+                const jwtAccess = ref(globalState.jwtAccessToken);
+                const sendTxRes = await callJsonRpc2Endpoint("transaction.SendTransaction", [{ access_token: jwtAccess.value, nounce: balanceRes.next_nounce, data: response.data.result.transaction_data_payload_hex, from: this.nodeAddress, to: "0x01", value: "0x0", transaction_fees: response.data.result.total_fees_required }])
+                this.lastTXSent = sendTxRes.data.result.transaction.hash
+
+                let tries = 0;
+                let loadTxInterval = setInterval(async () => {
+                    if (tries > 21) {
+                        this.folderToBeUpdated.updateFolderError = "It seems like there was an error sending your transaction. Please reload the page to see if your subchannel was created.";
+                        this.folderToBeUpdated.updatingFolder = false;
+                        clearInterval(loadTxInterval);
+                        return
+                    }
+                    tries++;
+                    let res = await this.getTransaction(this.lastTXSent)
+                    if (res.transactions && res.transactions.length > 0) {
+                        this.folderToBeUpdated.folderUpdated = true;
+                        this.folderToBeUpdated.updatingFolder = false;
+                        clearInterval(loadTxInterval);
+                        await this.reload()
+                        this.closeUpdateFolderModal()
+                        return
+                    }
+                }, 2000)
+
+            } catch (e) {
+                this.folderToBeUpdated.updateFolderError = e.message;
+                this.folderToBeUpdated.updatingFolder = false;
+            }
+        },
         async createNewFolder() {
             try {
                 if (this.creatingFolder) {
@@ -1253,12 +2046,8 @@ export default {
                     this.validateFolderNameError = "";
                 }
 
-
-
                 this.creatingFolder = true;
-
                 this.createFolderError = "";
-
                 const data = {
                     jsonrpc: '2.0',
                     method: "channel.CreateNodeItemsTxDataPayload",
@@ -1306,6 +2095,106 @@ export default {
                 this.creatingFolder = false;
             }
         },
+        async performUpdateSubChannel(op) {
+            try {
+                if (this.creatingSubChannel) {
+                    return;
+                }
+
+                if (this.updateSubchannel.name == "") {
+                    this.validateNameError = "Channel name is required";
+                    return;
+                } else {
+                    this.validateNameError = "";
+                }
+
+                if (this.updateSubchannel.description == "") {
+                    this.validateDescError = "Channel description is required";
+                    return;
+                } else {
+                    this.validateDescError = "";
+                }
+
+                if(op && op == "delete") {
+                    const userConfirmed = confirm("Are you sure you want to delete the sub-channel?");
+                    if (!userConfirmed) {
+                        return
+                    }
+                    this.updateSubchannel.enabled = false;
+                }
+
+                this.creatingSubChannel = true;
+                this.createSubChannelError = "";
+
+
+
+                if(this.getAltName(this.tmpSubChannel) != this.updateSubchannel.name) {
+                    if(this.updateSubchannel.attributes == undefined) {
+                        this.updateSubchannel.attributes = []
+                    }
+
+                    let foundIndex = -1
+                    this.updateSubchannel.attributes.forEach((attr, idx) => {
+                        if(attr.includes("alt_name:")) {
+                            foundIndex = idx
+                        }
+                    })
+
+                    if(foundIndex == -1) {
+                        this.updateSubchannel.attributes.push("alt_name:" +this.updateSubchannel.name)
+                    } else {
+                        this.updateSubchannel.attributes[foundIndex] = "alt_name:" +this.updateSubchannel.name
+                    }
+                }
+
+                const data = {
+                    jsonrpc: '2.0',
+                    method: "channel.CreateNodeItemsTxDataPayload",
+                    params: [{ is_update: true, nodes: [this.updateSubchannel] }],
+                    id: 1
+                };
+
+                const endpoint = ref(globalState.rpcEndpoint);
+                const response = await axios.post(endpoint.value, data);
+
+                let channelFees = numberToBN(response.data.result.total_fees_required);
+                let balanceRes = await this.getBalance();
+                let balanceFFGOneBig = numberToBN(balanceRes.balance_hex);
+                if (balanceFFGOneBig.lt(channelFees)) {
+                    throw new Error(
+                        `You don't have enough coins in your balance!`
+                    );
+                }
+                const jwtAccess = ref(globalState.jwtAccessToken);
+                const sendTxRes = await callJsonRpc2Endpoint("transaction.SendTransaction", [{ access_token: jwtAccess.value, nounce: balanceRes.next_nounce, data: response.data.result.transaction_data_payload_hex, from: this.nodeAddress, to: "0x01", value: "0x0", transaction_fees: response.data.result.total_fees_required }])
+                this.lastTXSent = sendTxRes.data.result.transaction.hash
+
+
+                let tries = 0;
+                let loadTxInterval = setInterval(async () => {
+                    if (tries > 21) {
+                        this.createSubChannelError = "It seems like there was an error sending your transaction. Please reload the page to see if your subchannel was created.";
+                        this.creatingSubChannel = false;
+                        clearInterval(loadTxInterval);
+                        return
+                    }
+                    tries++;
+                    let res = await this.getTransaction(this.lastTXSent)
+                    if (res.transactions && res.transactions.length > 0) {
+                        this.subChannelCreated = true;
+                        this.creatingSubChannel = false;
+                        clearInterval(loadTxInterval);
+                        await this.reload()
+                        this.closeUpdateSubChannelModal()
+                        return
+                    }
+                }, 2000)
+
+            } catch (e) {
+                this.createSubChannelError = e.message;
+                this.creatingSubChannel = false;
+            }
+        },
         async createSubChannel() {
             try {
                 if (this.creatingSubChannel) {
@@ -1327,7 +2216,6 @@ export default {
                 }
 
                 this.creatingSubChannel = true;
-
                 this.createSubChannelError = "";
 
                 const data = {
@@ -1366,6 +2254,8 @@ export default {
                     if (res.transactions && res.transactions.length > 0) {
                         this.subChannelCreated = true;
                         this.creatingSubChannel = false;
+                        this.name = ""
+                        this.description = ""
                         clearInterval(loadTxInterval);
                         await this.reload()
                         this.closeCreateSubChannelModal()
@@ -1389,11 +2279,11 @@ export default {
             const response = await axios.post(endpoint.value, data);
             return response.data.result;
         },
-        async loadMedia() {
+        async loadMedia(node) {
             // if entry and has media
             this.downloadedMedia = [];
-            if (this.node.node_type == 3 && this.hasMedia(this.node)) {
-                let fileHashes = this.node.attributes.map((o) => {
+            if (node.node_type == 3 && this.hasMedia(node)) {
+                let fileHashes = node.attributes.filter((o) => o.startsWith("media:")).map((o) => {
                     return o.split("media:")[1]
                 }).map((o) => {
                     return o.split("|")[0]
@@ -1403,7 +2293,7 @@ export default {
                     this.loadingMedia = true;
                     const mediaRes = await callJsonRpc2Endpoint("data_transfer.DiscoverDownloadMediaFileRequest", [{ file_hashes: fileHashes.join(",") }])
                     if (mediaRes.data.error == null || !mediaRes.data.error) {
-                        let hashesWithExt = this.node.attributes.map((o) => {
+                        let hashesWithExt = node.attributes.filter((o) => o.startsWith("media:")).map((o) => {
                             let namext = o.split("media:")[1]
                             namext.split("|")[0]
                             return {
@@ -1537,6 +2427,7 @@ export default {
         },
 
         openCreateSubChannelModal() {
+            this.validateNameError = ""
             this.subChannelCreated = false;
             const myModal = document.getElementById('modal-createsubchannel');
             const modal = window.UIkit.modal(myModal);
@@ -1547,7 +2438,25 @@ export default {
             const modal = window.UIkit.modal(myModal);
             modal.hide();
         },
+        openUpdateSubChannelModal(subchannel) {
+            subchannel.name = this.getAltName(subchannel)
+            this.tmpSubChannel = subchannel
+            this.updateSubchannel =  JSON.parse(JSON.stringify(subchannel));
+            this.validateNameError = ""
+            this.subChannelCreated = false;
+            const myModal = document.getElementById('modal-updatesubchannel');
+            const modal = window.UIkit.modal(myModal);
+            modal.show();
+        },
+        closeUpdateSubChannelModal() {
+            const myModal = document.getElementById('modal-updatesubchannel');
+            const modal = window.UIkit.modal(myModal);
+            modal.hide();
+            // this.updateSubchannel = null;
+        },
         openNewFolderModal() {
+            this.creatingFolder = false;
+            this.folderCreated = false;
             this.subChannelCreated = false;
             const myModal = document.getElementById('modal-newfolder');
             const modal = window.UIkit.modal(myModal);
@@ -1555,6 +2464,60 @@ export default {
         },
         closeNewFolderModal() {
             const myModal = document.getElementById('modal-newfolder');
+            const modal = window.UIkit.modal(myModal);
+            modal.hide();
+        },
+        openUpdateFolderModal(folder) {
+            this.tmpFolder = folder;
+            this.folderToBeUpdated.folder_name = this.getAltName(folder);
+            
+            this.folderToBeUpdated.updatingFolder = false;
+            this.folderToBeUpdated.folderUpdated = false;
+            const myModal = document.getElementById('modal-updatefolder');
+            const modal = window.UIkit.modal(myModal);
+            modal.show();
+        },
+        openUpdateFileModal(file) {
+            this.tmpFile = file;
+            const myModal = document.getElementById('modal-updatefile');
+            const modal = window.UIkit.modal(myModal);
+            modal.show();
+        },
+        closeUpdateFileModal() {
+            this.tmpFile = null;
+            const myModal = document.getElementById('modal-updatefile');
+            const modal = window.UIkit.modal(myModal);
+            modal.hide();
+        },
+        async openUpdateEntry(entry) {
+            this.mediaFiles = [];
+            SetEntryUpdateMode(true)
+
+            this.loadingMediaFilesInEntryUpdate = true
+            await this.loadMedia(entry)
+            this.loadingMediaFilesInEntryUpdate = false
+
+            if(this.hasMedia(entry)) {
+                for(let i=0;i<entry.attributes.length;i++) {
+                    if (entry.attributes[i].startsWith("media:")) {
+                        let namext = entry.attributes[i].split("media:")[1]
+                        let name = namext.split("|")[0]
+                        let ext = namext.split("|")[1]
+                        this.mediaFiles.push({
+                            ext: ext,
+                            file_hash: name,
+                            previewURL: this.globalState.mediaEndpoint + "?hash=" + name  + "&type=" + ext
+                        })
+                    }
+                }
+            }
+
+            entry.name = this.getAltName(entry)
+            this.tmpEntry = JSON.parse(JSON.stringify(entry))
+            this.tmpEntryOriginal = JSON.parse(JSON.stringify(entry))
+        },
+        closeUpdateFolderModal() {
+            const myModal = document.getElementById('modal-updatefolder');
             const modal = window.UIkit.modal(myModal);
             modal.hide();
         },

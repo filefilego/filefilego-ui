@@ -51,6 +51,7 @@ const globalState = reactive({
     currentNounce: "",
     nextNounce: "",
     entryCreationMode: false,
+    updateEntryMode: false,
 })
 
 var GlobalQueue = (function () {
@@ -618,6 +619,10 @@ export function RemoveStorageProviders(storage_provider_peer_addr, accessType) {
 
 export function SetEntryCreationMode(val) {
     globalState.entryCreationMode = val;
+}
+
+export function SetEntryUpdateMode(val) {
+    globalState.updateEntryMode = val;
 }
 
 export function SetChannelOperationFees(channelFees, otherOperationFees) {

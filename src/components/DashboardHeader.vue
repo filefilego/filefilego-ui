@@ -39,7 +39,7 @@
   
   <script>
   const { ipcRenderer } = window.require("electron");
-  import { globalState, SetEntryCreationMode } from '../store';
+  import { globalState, SetEntryCreationMode, SetEntryUpdateMode } from '../store';
   import { ref } from 'vue';
 
   export default {
@@ -49,6 +49,10 @@
     computed: {
       entryMode() {
           const mode = ref(globalState.entryCreationMode);
+          return mode.value
+      },
+      entryUpdateMode() {
+          const mode = ref(globalState.updateEntryMode);
           return mode.value
       }
     },
@@ -61,6 +65,9 @@
       goBack() {  
         if(this.entryMode) {
           SetEntryCreationMode(false);
+
+        } else if(this.entryUpdateMode) {
+            SetEntryUpdateMode(false);
         } else {
           this.$router.go(-1);
         }

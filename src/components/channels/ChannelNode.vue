@@ -205,8 +205,8 @@
                         {{ getAltName(node) }}
                     </h4>
                 </div>
-                <div class="k-width-expand uk-text-right">
-                    <div v-show="getPermission() != 'guest'">
+                <div class="uk-width-expand uk-text-right">
+                    <div>
                         <div>
                             <router-link style="margin-right: 10px;" :to="'/channels/search/?channel_name=' + root_node.name +'&channel=' + root_node.node_hash">
                                 <button class="uk-button ffg-button-search " style="text-transform: none; color:#000; font-weight: 500; padding:0px 10px;">
@@ -215,12 +215,11 @@
                                 </button>
                             </router-link>
 
-                            <button v-if="getPermission() == 'owner' && node.node_type==1" @click="openEditChannelModal()" style="margin-right:8px; text-transform: none; border-radius: 3px; border:1px solid #ababab;" class="uk-button uk-button-default" type="button">
+                            <button v-if="getPermission() != 'guest' && getPermission() == 'owner' && node.node_type==1" @click="openEditChannelModal()" style="margin-right:8px; text-transform: none; border-radius: 3px; border:1px solid #ababab;" class="uk-button uk-button-default" type="button">
                                 Edit Channel
                                 <span class="uk-icon" uk-icon="icon: nut"></span>
                             </button>
-
-                            <button v-show="node.node_type != 5 && isNewButtonAvailable()" class="uk-button ffg-button" style="width:150px; height:40px; ">
+                            <button v-show="getPermission() != 'guest' && node.node_type != 5 && isNewButtonAvailable()" class="uk-button ffg-button" style="width:150px; height:40px; ">
                                 New
                                 <span class="uk-icon" uk-icon="icon: plus"></span>
                             </button>
